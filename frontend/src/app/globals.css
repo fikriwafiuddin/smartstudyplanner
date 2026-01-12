@@ -48,6 +48,9 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
+  --background-image-gradient-primary: var(--gradient-primary);
+  --background-image-gradient-subtle: var(--gradient-subtle);
+  --background-image-gradient-card: var(--gradient-card);
 }
 
 :root {
@@ -87,7 +90,7 @@
 
   --radius: 0.75rem;
 
-  --sidebar: oklch(1 0 0);
+  --sidebar-background: oklch(1 0 0);
   --sidebar-foreground: oklch(0.02 0.01 274.6);
   --sidebar-primary: oklch(0.67 0.22 277.6);
   --sidebar-primary-foreground: oklch(1 0 0);
@@ -99,17 +102,17 @@
   /* Custom gradients */
   --gradient-primary: linear-gradient(
     135deg,
-    oklch(0.67 0.22 277.6) 0%,
-    oklch(0.55 0.21 301.6) 100%
+    var(--primary) 0%,
+    var(--accent) 100%
   );
   --gradient-subtle: linear-gradient(
     135deg,
-    oklch(0.96 0.02 278) 0%,
-    oklch(0.99 0.01 250.6) 100%
+    var(--secondary) 0%,
+    var(--background) 100%
   );
   --gradient-card: linear-gradient(
     180deg,
-    oklch(1 0 0) 0%,
+    var(--card) 0%,
     oklch(0.98 0.01 278) 100%
   );
 
