@@ -1,3 +1,5 @@
+"use client"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -12,10 +14,7 @@ import { Badge } from "@/components/ui/badge"
 import { BellIcon, SearchIcon } from "lucide-react"
 import { SidebarTrigger } from "../ui/sidebar"
 import { ModeToggle } from "../ModeToggle"
-
-type AppHeaderProps = {
-  title: string
-}
+import { usePathname } from "next/navigation"
 
 const notifications = [
   {
@@ -38,7 +37,11 @@ const notifications = [
   },
 ]
 
-function AppHeader({ title }: AppHeaderProps) {
+function AppHeader() {
+  const pathname = usePathname()
+  const split = pathname.split("/")
+  let title = split[1]
+  title = title.length > 0 ? title.charAt(0).toUpperCase() + title.slice(1) : ""
   const unreadCount = notifications.filter((n) => n.unread).length
 
   return (
