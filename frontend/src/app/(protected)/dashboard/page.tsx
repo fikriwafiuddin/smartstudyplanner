@@ -7,10 +7,7 @@ import ProgressRing from "./_components/ProgressRing"
 
 function DashboardPage() {
   return (
-    <MainWrapper
-      title="Dashboard"
-      subtitle="Welcome back, Alex! Here's your study overview."
-    >
+    <MainWrapper title="Dashboard">
       <div className="space-y-6">
         <StatsSection />
 

@@ -15,7 +15,6 @@ import { ModeToggle } from "../ModeToggle"
 
 type AppHeaderProps = {
   title: string
-  subtitle: string
 }
 
 const notifications = [
@@ -39,7 +38,7 @@ const notifications = [
   },
 ]
 
-function AppHeader({ title, subtitle }: AppHeaderProps) {
+function AppHeader({ title }: AppHeaderProps) {
   const unreadCount = notifications.filter((n) => n.unread).length
 
   return (
@@ -51,9 +50,6 @@ function AppHeader({ title, subtitle }: AppHeaderProps) {
           {/* Title */}
           <div>
             <h1 className="text-xl font-semibold text-foreground">{title}</h1>
-            {subtitle && (
-              <p className="text-sm text-muted-foreground">{subtitle}</p>
-            )}
           </div>
         </div>
 

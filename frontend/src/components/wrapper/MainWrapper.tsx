@@ -3,14 +3,13 @@ import AppHeader from "../layout/AppHeader"
 
 type MainWrapperProps = {
   title: string
-  subtitle: string
   children: ReactNode
 }
 
-function MainWrapper({ title, subtitle, children }: MainWrapperProps) {
+function MainWrapper({ title, children }: MainWrapperProps) {
   return (
     <div>
-      <AppHeader title={title} subtitle={subtitle} />
+      <AppHeader title={title} />
       <div className="p-6">{children}</div>
     </div>
   )
