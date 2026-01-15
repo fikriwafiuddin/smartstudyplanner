@@ -20,3 +20,9 @@ export const colorOptions = [
   "#f1c40f",
   "#8e44ad",
 ]
+
+export const statusColors = {
+  online: "bg-success",
+  offline: "bg-muted-foreground",
+  away: "bg-warning",
+}
