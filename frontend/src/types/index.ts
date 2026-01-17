@@ -22,3 +22,22 @@ export type Group = {
 export type PriorityTask = "high" | "medium" | "low"
 
 export type FilterType = "all" | "today" | "upcoming" | "completed"
+
+export type ScheduleItemType = "course" | "activity" | "event"
+
+export type ScheduleItem = {
+  id: string
+  type: ScheduleItemType
+  name: string
+  code?: string
+  lecturer?: string
+  organizer?: string
+  location: string
+  day: string
+  startHour: string
+  duration: string
+  color: string
+  description?: string
+  isRecurring?: boolean
+  eventDate?: string
+}

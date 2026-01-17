@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils"
 const navItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Schedule", url: "/schedule", icon: Calendar },
+  { title: "Courses", url: "/courses", icon: GraduationCapIcon },
   { title: "Tasks", url: "/tasks", icon: CheckSquare },
   { title: "Study Groups", url: "/groups", icon: Users },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
