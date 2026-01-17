@@ -1,94 +1,111 @@
+import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { ScheduleItem, ScheduleItemType } from "@/types"
 
-const courses = [
+const days = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+]
+const items: ScheduleItem[] = [
   {
-    id: 1,
+    id: "1",
+    type: "course",
     name: "Data Structures",
+    code: "CS201",
     lecturer: "Dr. Smith",
-    day: 0,
-    startHour: 9,
-    duration: 2,
+    location: "Room 301",
+    day: "0",
+    startHour: "9",
+    duration: "2",
     color: "bg-primary",
+    description: "Introduction to data structures and algorithms",
+    isRecurring: true,
   },
   {
-    id: 2,
+    id: "2",
+    type: "course",
     name: "Linear Algebra",
+    code: "MATH301",
     lecturer: "Prof. Johnson",
-    day: 1,
-    startHour: 11,
-    duration: 1,
+    location: "Room 205",
+    day: "1",
+    startHour: "11",
+    duration: "1",
     color: "bg-accent",
+    isRecurring: true,
   },
   {
-    id: 3,
+    id: "3",
+    type: "course",
     name: "Database Systems",
-    lecturer: "Dr. Chen",
-    day: 2,
-    startHour: 14,
-    duration: 2,
+    code: "CS301",
+    lecturer: "Dr. Williams",
+    location: "Room 401",
+    day: "2",
+    startHour: "14",
+    duration: "2",
     color: "bg-success",
+    description: "Relational databases and SQL",
+    isRecurring: true,
   },
   {
-    id: 4,
+    id: "4",
+    type: "course",
     name: "Computer Networks",
-    lecturer: "Prof. Williams",
-    day: 3,
-    startHour: 10,
-    duration: 2,
+    code: "CS401",
+    lecturer: "Prof. Brown",
+    location: "Room 102",
+    day: "3",
+    startHour: "10",
+    duration: "1",
     color: "bg-warning",
-  },
-  {
-    id: 5,
-    name: "Software Engineering",
-    lecturer: "Dr. Brown",
-    day: 4,
-    startHour: 13,
-    duration: 2,
-    color: "bg-destructive",
-  },
-  {
-    id: 6,
-    name: "Data Structures Lab",
-    lecturer: "TA Martinez",
-    day: 0,
-    startHour: 14,
-    duration: 3,
-    color: "bg-primary/70",
-  },
-  {
-    id: 7,
-    name: "Physics",
-    lecturer: "Dr. Taylor",
-    day: 2,
-    startHour: 9,
-    duration: 2,
-    color: "bg-indigo-500",
+    isRecurring: true,
   },
 ]
+
+const getTypeLabel = (type: ScheduleItemType) => {
+  switch (type) {
+    case "course":
+      return "Course"
+    case "activity":
+      return "Activity"
+    case "event":
+      return "Event"
+  }
+}
 
 function CourseLegendSection() {
   return (
     <div className="bg-card rounded-xl border border-border shadow-soft p-5 animate-slide-up">
-      <h3 className="font-semibold text-foreground mb-4">Your Courses</h3>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-        {courses
-          .filter((c, i, arr) => arr.findIndex((x) => x.name === c.name) === i)
-          .map((course) => (
-            <div
-              key={course.id}
-              className="flex items-center gap-3 p-2 rounded-lg hover:bg-secondary/50 transition-colors"
-            >
-              <div className={cn("w-3 h-3 rounded-full", course.color)} />
-              <div>
-                <p className="text-sm font-medium text-foreground">
-                  {course.name}
+      <h3 className="font-semibold text-foreground mb-4">Your Schedule</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        {items.map((item) => (
+          <div
+            key={item.id}
+            className="flex items-center gap-3 p-2 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer group"
+          >
+            <div className={cn("w-3 h-3 rounded-full", item.color)} />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium text-foreground truncate">
+                  {item.name}
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  {course.lecturer}
-                </p>
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                  {getTypeLabel(item.type)}
+                </Badge>
               </div>
+              <p className="text-xs text-muted-foreground truncate">
+                {item.lecturer || item.organizer} • {days[parseInt(item.day)]}{" "}
+                {item.startHour}:00
+              </p>
             </div>
-          ))}
+          </div>
+        ))}
       </div>
     </div>
   )
