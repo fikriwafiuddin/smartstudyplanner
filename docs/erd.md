@@ -161,6 +161,7 @@ erDiagram
         text description
         string invite_code UK
         string color
+        int members_count
         timestamp last_active
         timestamp created_at
         timestamp updated_at
