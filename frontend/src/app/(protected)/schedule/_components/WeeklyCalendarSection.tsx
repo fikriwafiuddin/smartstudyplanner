@@ -251,12 +251,15 @@ function WeeklyCalendarSection() {
         <div className="overflow-x-auto custom-scrollbar">
           <div className="min-w-[900px]">
             {/* Day Headers */}
-            <div className="grid grid-cols-[80px_repeat(7,1fr)] border-b border-border">
+            <div className="grid grid-cols-[80px_repeat(5,1fr)] border-b border-border">
               <div className="p-4 bg-secondary/30" />
               {days.map((day, index) => (
                 <div
                   key={day}
-                  className="p-4 text-center border-l border-border bg-secondary/30"
+                  className={cn(
+                    "p-4 text-center border-l border-border",
+                    index % 2 !== 0 ? "bg-secondary/90" : "bg-secondary/20",
+                  )}
                 >
                   <p className="font-semibold text-foreground">{day}</p>
                   <p className="text-sm text-muted-foreground">
@@ -271,7 +274,7 @@ function WeeklyCalendarSection() {
               {hours.map((hour) => (
                 <div
                   key={hour}
-                  className="grid grid-cols-[80px_repeat(7,1fr)] border-b border-border last:border-b-0"
+                  className="grid grid-cols-[80px_repeat(5,1fr)] border-b border-border last:border-b-0"
                 >
                   <div className="p-3 text-sm text-muted-foreground text-right pr-4 bg-secondary/10">
                     {hour}
@@ -283,7 +286,10 @@ function WeeklyCalendarSection() {
                     return (
                       <div
                         key={dayIndex}
-                        className="border-l border-border h-16 relative"
+                        className={cn(
+                          "border-l border-border h-16 relative",
+                          dayIndex % 2 !== 0 && "bg-muted/60",
+                        )}
                       >
                         {isFirst && item && (
                           <div
@@ -314,11 +320,11 @@ function WeeklyCalendarSection() {
                                 </Badge>
                               )}
                             </div>
-                            <p className="font-medium text-sm truncate">
+                            <p className="font-semibold text-xs mb-1 line-clamp-2 leading-tight">
                               {item.name}
                             </p>
-                            <div className="flex items-center justify-between mt-1">
-                              <p className="text-xs opacity-90 truncate max-w-[70%]">
+                            <div className="flex flex-col gap-0.5 mt-auto">
+                              <p className="text-[10px] opacity-90 line-clamp-1">
                                 {item.lecturer || item.organizer}
                               </p>
                               <div className="flex items-center gap-1">

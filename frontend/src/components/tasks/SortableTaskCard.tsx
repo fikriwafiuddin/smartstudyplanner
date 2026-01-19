@@ -8,11 +8,13 @@ import {
   BookOpen,
   Pencil,
   GripVertical,
+  Target,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Task } from "@/types"
+import { useFocus } from "@/context/FocusContext"
 
 const priorityConfig = {
   high: {
@@ -39,6 +41,7 @@ export function SortableTaskCard({
   onToggle,
   onEdit,
 }: SortableTaskCardProps) {
+  const { startFocusSession } = useFocus()
   const {
     attributes,
     listeners,
@@ -61,7 +64,7 @@ export function SortableTaskCard({
       className={cn(
         "bg-card rounded-xl border border-border p-4 shadow-soft hover:shadow-md transition-all duration-200 animate-slide-up group",
         task.completed && "opacity-70",
-        isDragging && "shadow-lg ring-2 ring-primary/20 z-50 opacity-90"
+        isDragging && "shadow-lg ring-2 ring-primary/20 z-50 opacity-90",
       )}
     >
       <div className="flex items-start gap-3">
@@ -88,7 +91,7 @@ export function SortableTaskCard({
               <h4
                 className={cn(
                   "font-medium text-foreground",
-                  task.completed && "line-through text-muted-foreground"
+                  task.completed && "line-through text-muted-foreground",
                 )}
               >
                 {task.title}
@@ -110,6 +113,20 @@ export function SortableTaskCard({
               <Button
                 variant="ghost"
                 size="icon"
+                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-primary hover:text-primary hover:bg-primary/10"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  startFocusSession(
+                    task.courseId?.toString(),
+                    task.id.toString(),
+                  )
+                }}
+              >
+                <Target className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
                 className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
                 onClick={() => onEdit(task)}
               >
@@ -127,7 +144,7 @@ export function SortableTaskCard({
                 "flex items-center gap-1.5 text-sm",
                 new Date(task.deadline) <= new Date() && !task.completed
                   ? "text-destructive font-medium"
-                  : "text-muted-foreground"
+                  : "text-muted-foreground",
               )}
             >
               <Calendar className="w-4 h-4" />

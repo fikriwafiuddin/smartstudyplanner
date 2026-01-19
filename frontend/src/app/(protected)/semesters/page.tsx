@@ -1,32 +1,22 @@
 "use client"
 
 import { useState } from "react"
-import {
-  Plus,
-  Search,
-  Calendar,
-  GraduationCap,
-  Clock,
-  Pencil,
-  Trash2,
-} from "lucide-react"
+import { Plus, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { cn } from "@/lib/utils"
+import { Card, CardContent } from "@/components/ui/card"
 import { Semester } from "@/types"
 import SemesterForm from "@/components/semesters/SemesterForm"
 import { useSemester } from "@/context/SemesterContext"
+import SemesterCard from "@/components/semesters/SemesterCard"
 
 export default function Semesters() {
-  const { semesters, setActiveSemester } = useSemester()
+  const { semesters } = useSemester()
   const [searchQuery, setSearchQuery] = useState("")
   const [openForm, setOpenForm] = useState<boolean>(false)
   const [selectedSemester, setSelectedSemester] = useState<
     Semester | undefined
   >(undefined)
-  const [formMode, setFormMode] = useState<"create" | "edit">("create")
 
   const filteredSemesters = semesters.filter((s) =>
     s.name.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -34,13 +24,6 @@ export default function Semesters() {
 
   const handleCreate = () => {
     setSelectedSemester(undefined)
-    setFormMode("create")
-    setOpenForm(true)
-  }
-
-  const handleEdit = (semester: Semester) => {
-    setSelectedSemester(semester)
-    setFormMode("edit")
     setOpenForm(true)
   }
 
@@ -49,7 +32,7 @@ export default function Semesters() {
       <SemesterForm
         open={openForm}
         onOpenChange={setOpenForm}
-        mode={formMode}
+        mode="create"
         semester={selectedSemester}
       />
 
@@ -82,74 +65,7 @@ export default function Semesters() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredSemesters.map((semester) => (
-          <Card
-            key={semester.id}
-            className={cn(
-              "group hover:shadow-md transition-shadow relative overflow-hidden",
-              semester.isActive && "border-primary ring-1 ring-primary/20",
-            )}
-          >
-            {semester.isActive && (
-              <div className="absolute top-0 right-0 p-2">
-                <Badge className="bg-primary text-primary-foreground">
-                  Active
-                </Badge>
-              </div>
-            )}
-            <CardHeader className="pb-3">
-              <CardTitle className="text-xl flex items-center gap-2">
-                <GraduationCap className="h-5 w-5 text-primary" />
-                {semester.name}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Calendar className="w-4 h-4" />
-                  <span>
-                    {new Date(semester.startDate).toLocaleDateString()} -{" "}
-                    {new Date(semester.endDate).toLocaleDateString()}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Clock className="w-4 h-4" />
-                  <span>
-                    Created {new Date(semester.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 pt-4 border-t border-border opacity-0 group-hover:opacity-100 transition-opacity">
-                {!semester.isActive && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1 gap-2 hover:bg-primary/10 hover:text-primary"
-                    onClick={() => setActiveSemester(semester)}
-                  >
-                    Set Active
-                  </Button>
-                )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 gap-2"
-                  onClick={() => handleEdit(semester)}
-                >
-                  <Pencil className="h-4 w-4" />
-                  Edit
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Delete
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <SemesterCard key={semester.id} semester={semester} />
         ))}
       </div>
 

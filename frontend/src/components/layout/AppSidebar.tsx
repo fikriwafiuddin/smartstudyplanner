@@ -27,6 +27,7 @@ import {
   FileText,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import SemesterSwitcher from "./SemesterSwitcher"
 
 const navItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
@@ -87,6 +88,11 @@ function AppSidebar() {
           collapsed ? "px-0" : "px-3",
         )}
       >
+        {!collapsed && (
+          <div className="px-3 mb-4 lg:hidden">
+            <SemesterSwitcher variant="sidebar" />
+          </div>
+        )}
         <SidebarMenu className="gap-1">
           {navItems.map((item) => {
             const isActive = pathname === item.url

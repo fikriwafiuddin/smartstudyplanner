@@ -15,15 +15,8 @@ import { BellIcon, SearchIcon } from "lucide-react"
 import { SidebarTrigger } from "../ui/sidebar"
 import { ModeToggle } from "../ModeToggle"
 import { usePathname } from "next/navigation"
-import { useSemester } from "@/context/SemesterContext"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { GraduationCapIcon } from "lucide-react"
+import Link from "next/link"
+import SemesterSwitcher from "./SemesterSwitcher"
 
 const notifications = [
   {
@@ -48,7 +41,6 @@ const notifications = [
 
 function AppHeader() {
   const pathname = usePathname()
-  const { activeSemester, setActiveSemester, semesters } = useSemester()
   const split = pathname.split("/")
   let title = split[1]
   title = title.length > 0 ? title.charAt(0).toUpperCase() + title.slice(1) : ""
@@ -65,27 +57,7 @@ function AppHeader() {
             <h1 className="text-xl font-semibold text-foreground">{title}</h1>
           </div>
 
-          <div className="hidden lg:flex items-center gap-2 ml-4 px-4 py-1.5 bg-secondary/30 rounded-full border border-border/50">
-            <GraduationCapIcon className="w-4 h-4 text-primary" />
-            <Select
-              value={activeSemester?.id.toString()}
-              onValueChange={(val) => {
-                const semester = semesters.find((s) => s.id.toString() === val)
-                if (semester) setActiveSemester(semester)
-              }}
-            >
-              <SelectTrigger className="h-7 border-0 bg-transparent p-0 focus:ring-0 w-auto gap-2 text-sm font-medium">
-                <SelectValue placeholder="Select Semester" />
-              </SelectTrigger>
-              <SelectContent>
-                {semesters.map((s) => (
-                  <SelectItem key={s.id} value={s.id.toString()}>
-                    {s.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <SemesterSwitcher className="hidden lg:flex ml-4" />
         </div>
 
         {/* Actions */}
@@ -138,9 +110,11 @@ function AppHeader() {
                 </DropdownMenuItem>
               ))}
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-center text-primary text-sm justify-center">
-                View all notifications
-              </DropdownMenuItem>
+              <Link href="/settings/notifications" className="w-full">
+                <DropdownMenuItem className="text-center text-primary text-sm justify-center cursor-pointer hover:underline">
+                  View all notifications
+                </DropdownMenuItem>
+              </Link>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

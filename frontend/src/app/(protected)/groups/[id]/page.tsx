@@ -6,15 +6,17 @@ import MembersList from "./_components/MembersList"
 function DetailGroupPage() {
   return (
     <>
-      <HeaderSection />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <div className="lg:col-span-2 space-y-6">
+          <HeaderSection />
+          <SharedTasksSection />
+          <MembersList />
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <SharedTasksSection />
-
-        <DiscussionsSection />
+        <div className="lg:sticky lg:top-6 h-fit">
+          <DiscussionsSection />
+        </div>
       </div>
-
-      <MembersList />
     </>
   )
 }

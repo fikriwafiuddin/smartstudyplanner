@@ -22,6 +22,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Mail, UserPlus } from "lucide-react"
 import { Check, Copy } from "lucide-react"
 import { useState } from "react"
+import { toast } from "sonner"
 import { inviteMemberSchema } from "@/validations/groupvalidation"
 import { InviteMemberValues } from "@/types/form"
 
@@ -39,11 +40,13 @@ function InviteMemberModal() {
   const copyInviteCode = () => {
     navigator.clipboard.writeText("DST-2025-A")
     setCopied(true)
+    toast.info("Invite code copied to clipboard!")
     setTimeout(() => setCopied(false), 2000)
   }
 
   const handleSubmit = (data: InviteMemberValues) => {
     console.log(data)
+    toast.success(`Invite sent to ${data.email}`)
     form.reset()
     setOpen(false)
   }

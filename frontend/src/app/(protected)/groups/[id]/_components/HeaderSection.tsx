@@ -1,7 +1,10 @@
+"use client"
+
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { SettingsIcon, UsersIcon } from "lucide-react"
+import { LogOut, SettingsIcon, UsersIcon } from "lucide-react"
+import { toast } from "sonner"
 
 const group = {
   id: 1,
@@ -46,7 +49,7 @@ function HeaderSection() {
           <div
             className={cn(
               "w-12 h-12 rounded-xl flex items-center justify-center",
-              group.color
+              group.color,
             )}
           >
             <UsersIcon className="w-6 h-6 text-white" />
@@ -58,9 +61,22 @@ function HeaderSection() {
             </p>
           </div>
         </div>
-        <Button variant="outline" size="icon">
-          <SettingsIcon className="w-4 h-4" />
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            onClick={() => {
+              toast.error("You have left the group.")
+              window.location.href = "/groups"
+            }}
+          >
+            <LogOut className="w-4 h-4" />
+          </Button>
+          <Button variant="outline" size="icon">
+            <SettingsIcon className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
 
       {/* Members */}

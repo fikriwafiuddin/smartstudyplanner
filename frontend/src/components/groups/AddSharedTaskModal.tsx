@@ -31,6 +31,7 @@ import { CheckSquare } from "lucide-react"
 import { addSharedTaskSchema } from "@/validations/groupvalidation"
 import { AddSharedTaskValues } from "@/types/form"
 import { useState } from "react"
+import { toast } from "sonner"
 
 const members = [
   {
@@ -71,7 +72,9 @@ export function AddSharedTaskModal() {
 
   const handleSubmit = (data: AddSharedTaskValues) => {
     console.log(data)
+    toast.success(`Task "${data.title}" assigned to ${data.assignee}`)
     form.reset()
+    setOpen(false)
   }
 
   return (

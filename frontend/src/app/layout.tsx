@@ -4,6 +4,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/wrapper/ThemeProvider"
 import { Toaster } from "@/components/ui/sonner"
 import { SemesterProvider } from "@/context/SemesterContext"
+import { FocusProvider } from "@/context/FocusContext"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,8 +38,10 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <SemesterProvider>
-            {children}
-            <Toaster />
+            <FocusProvider>
+              {children}
+              <Toaster />
+            </FocusProvider>
           </SemesterProvider>
         </ThemeProvider>
       </body>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState } from "react"
 import {
   Play,
   Pause,
@@ -32,12 +32,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { Star } from "lucide-react"
 import { toast } from "sonner"
-
-const MODES = {
-  POMODORO: { label: "Pomodoro", time: 25 * 60 },
-  SHORT_BREAK: { label: "Short Break", time: 5 * 60 },
-  LONG_BREAK: { label: "Long Break", time: 15 * 60 },
-}
+import { useFocus, MODES } from "@/context/FocusContext"
 
 const mockCourses = [
   { id: 1, name: "Human Computer Interaction" },
@@ -46,12 +41,20 @@ const mockCourses = [
 ]
 
 export default function FocusPage() {
-  const [mode, setMode] = useState<keyof typeof MODES>("POMODORO")
-  const [timeLeft, setTimeLeft] = useState(MODES.POMODORO.time)
-  const [isActive, setIsActive] = useState(false)
-  const [selectedCourse, setSelectedCourse] = useState<string>("")
-  const [sessionsCompleted, setSessionsCompleted] = useState(0)
-  const [showRatingDialog, setShowRatingDialog] = useState(false)
+  const {
+    mode,
+    timeLeft,
+    isActive,
+    selectedCourseId,
+    sessionsCompleted,
+    toggleTimer,
+    resetTimer,
+    setFocusMode,
+    showRatingDialog,
+    setShowRatingDialog,
+    startFocusSession,
+  } = useFocus()
+
   const [rating, setRating] = useState(0)
   const [notes, setNotes] = useState("")
   const [sessionHistory, setSessionHistory] = useState([
@@ -78,50 +81,12 @@ export default function FocusPage() {
     },
   ])
 
-  const progress = ((MODES[mode].time - timeLeft) / MODES[mode].time) * 100
-
-  const toggleTimer = () => setIsActive(!isActive)
-
-  const resetTimer = useCallback(() => {
-    setIsActive(false)
-    setTimeLeft(MODES[mode].time)
-  }, [mode])
-
-  useEffect(() => {
-    setTimeLeft(MODES[mode].time)
-  }, [mode])
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout | null = null
-
-    if (isActive && timeLeft > 0) {
-      interval = setInterval(() => {
-        setTimeLeft((prev) => prev - 1)
-      }, 1000)
-    } else if (timeLeft === 0) {
-      setIsActive(false)
-      if (mode === "POMODORO") {
-        setSessionsCompleted((prev) => prev + 1)
-        setShowRatingDialog(true)
-      } else {
-        toast.success("Break over! Ready to focus?")
-      }
-    }
-
-    return () => {
-      if (interval) clearInterval(interval)
-    }
-  }, [isActive, timeLeft, mode])
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
-  }
+  const currentMode = MODES[mode as keyof typeof MODES]
+  const progress = ((currentMode.time - timeLeft) / currentMode.time) * 100
 
   const handleSaveSession = () => {
     const courseName =
-      mockCourses.find((c) => c.id.toString() === selectedCourse)?.name ||
+      mockCourses.find((c) => c.id.toString() === selectedCourseId)?.name ||
       "Self Study"
     const newSession = {
       id: Date.now(),
@@ -218,7 +183,7 @@ export default function FocusPage() {
               {Object.entries(MODES).map(([key, value]) => (
                 <button
                   key={key}
-                  onClick={() => setMode(key as keyof typeof MODES)}
+                  onClick={() => setFocusMode(key as keyof typeof MODES)}
                   className={cn(
                     "px-4 py-2 rounded-lg text-sm font-medium transition-all",
                     mode === key
@@ -257,7 +222,10 @@ export default function FocusPage() {
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <span className="text-6xl font-black tracking-tighter tabular-nums text-foreground">
-                  {formatTime(timeLeft)}
+                  {Math.floor(timeLeft / 60)
+                    .toString()
+                    .padStart(2, "0")}
+                  :{(timeLeft % 60).toString().padStart(2, "0")}
                 </span>
                 <span className="text-sm font-medium uppercase tracking-widest text-muted-foreground">
                   {mode.replace("_", " ")}
@@ -292,7 +260,10 @@ export default function FocusPage() {
                 <Target className="w-4 h-4" />
                 Now studying:
               </label>
-              <Select value={selectedCourse} onValueChange={setSelectedCourse}>
+              <Select
+                value={selectedCourseId || ""}
+                onValueChange={(val) => startFocusSession(val)}
+              >
                 <SelectTrigger className="w-full bg-background/50 border-border/50 backdrop-blur-sm">
                   <SelectValue placeholder="What are you studying?" />
                 </SelectTrigger>
@@ -349,7 +320,7 @@ export default function FocusPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="pb-0">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
