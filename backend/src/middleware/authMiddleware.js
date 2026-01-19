@@ -6,7 +6,7 @@ const authMiddleware = (req, res, next) => {
     return res.status(401).json(new ErrorResponse("Unauthorized access", 401))
   }
 
-  req.user = userId
+  req.userId = userId
   next()
 }
 
