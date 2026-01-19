@@ -7,37 +7,14 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
-model User {
-  id            Int             @id @default(autoincrement())
-  clerkUserId   String          @unique @map("clerk_user_id")
-  createdAt     DateTime        @default(now()) @map("created_at")
-  updatedAt     DateTime        @updatedAt @map("updated_at")
-  
-  preferences   UserPreference?
-  semesters     Semester[]
-  courses       Course[]
-  tasks         Task[]
-  schedules     Schedule[]
-  studySessions StudySession[]
-  reminders     Reminder[]
-  attendance    AttendanceRecord[]
-  ownedGroups   Group[]         @relation("GroupOwner")
-  groupMemberships GroupMember[]
-  discussions   Discussion[]
-  createdSharedTasks SharedTask[] @relation("SharedTaskCreator")
-  assignedSharedTasks SharedTask[] @relation("SharedTaskAssignee")
-  resources     Resource[]
-
-  @@map("users")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model UserPreference {
   id                     Int      @id @default(autoincrement())
-  userId                 Int      @unique @map("user_id")
+  userId                 String   @unique @map("user_id")
   timezone               String
   reminderDefaultMinutes Int      @default(30) @map("reminder_default_minutes")
   startOfWeek            Int      @default(0) @map("start_of_week")
@@ -45,14 +22,12 @@ model UserPreference {
   workingHoursEnd        String   @default("22:00") @map("working_hours_end")
   updatedAt              DateTime @updatedAt @map("updated_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   @@map("user_preferences")
 }
 
 model Semester {
   id        Int      @id @default(autoincrement())
-  userId    Int      @map("user_id")
+  userId    String   @map("user_id")
   name      String
   startDate DateTime @map("start_date")
   endDate   DateTime @map("end_date")
@@ -60,7 +35,6 @@ model Semester {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   courses     Course[]
   schedules   Schedule[]
   assessments Assessment[]
@@ -70,7 +44,7 @@ model Semester {
 
 model Course {
   id                Int      @id @default(autoincrement())
-  userId            Int      @map("user_id")
+  userId            String   @map("user_id")
   semesterId        Int      @map("semester_id")
   name              String
   code              String?
@@ -80,7 +54,6 @@ model Course {
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
 
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   semester      Semester       @relation(fields: [semesterId], references: [id], onDelete: Cascade)
   tasks         Task[]
   schedules     Schedule[]
@@ -99,7 +72,7 @@ enum Priority {
 
 model Task {
   id           Int      @id @default(autoincrement())
-  userId       Int      @map("user_id")
+  userId       String   @map("user_id")
   courseId     Int      @map("course_id")
   parentTaskId Int?     @map("parent_task_id")
   title        String
@@ -111,7 +84,6 @@ model Task {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   course        Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
   parentTask    Task?          @relation("SubTasks", fields: [parentTaskId], references: [id])
   subtasks      Task[]         @relation("SubTasks")
@@ -151,18 +123,17 @@ model Assessment {
 }
 
 model StudySession {
-  id              Int      @id @default(autoincrement())
-  userId          Int      @map("user_id")
-  courseId        Int?     @map("course_id")
-  taskId          Int?     @map("task_id")
-  startedAt       DateTime @map("started_at")
+  id              Int       @id @default(autoincrement())
+  userId          String    @map("user_id")
+  courseId        Int?      @map("course_id")
+  taskId          Int?      @map("task_id")
+  startedAt       DateTime  @map("started_at")
   endedAt         DateTime? @map("ended_at")
-  durationMinutes Int      @map("duration_minutes")
-  notes           String?  @db.Text
-  focusRating     Int?     @map("focus_rating")
-  createdAt       DateTime @default(now()) @map("created_at")
+  durationMinutes Int       @map("duration_minutes")
+  notes           String?   @db.Text
+  focusRating     Int?      @map("focus_rating")
+  createdAt       DateTime  @default(now()) @map("created_at")
 
-  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   course Course? @relation(fields: [courseId], references: [id])
   task   Task?   @relation(fields: [taskId], references: [id])
 
@@ -183,7 +154,7 @@ enum ScheduleStatus {
 
 model Schedule {
   id          String         @id @default(uuid())
-  userId      Int            @map("user_id")
+  userId      String         @map("user_id")
   courseId    Int?           @map("course_id")
   semesterId  Int?           @map("semester_id")
   type        ScheduleType
@@ -192,7 +163,7 @@ model Schedule {
   lecturer    String?
   organizer   String?
   location    String
-  day         Int            // 0-6
+  day         Int // 0-6
   startHour   String         @map("start_hour")
   duration    String
   color       String
@@ -204,7 +175,6 @@ model Schedule {
   createdAt   DateTime       @default(now()) @map("created_at")
   updatedAt   DateTime       @updatedAt @map("updated_at")
 
-  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   course     Course?            @relation(fields: [courseId], references: [id])
   semester   Semester?          @relation(fields: [semesterId], references: [id])
   attendance AttendanceRecord[]
@@ -223,14 +193,13 @@ enum AttendanceStatus {
 model AttendanceRecord {
   id         Int              @id @default(autoincrement())
   scheduleId String           @map("schedule_id")
-  userId     Int              @map("user_id")
+  userId     String           @map("user_id")
   date       DateTime
   status     AttendanceStatus
   notes      String?          @db.Text
   createdAt  DateTime         @default(now()) @map("created_at")
 
   schedule Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("attendance_records")
 }
@@ -242,7 +211,7 @@ enum ReminderType {
 
 model Reminder {
   id           Int          @id @default(autoincrement())
-  userId       Int          @map("user_id")
+  userId       String       @map("user_id")
   taskId       Int?         @map("task_id")
   scheduleId   String?      @map("schedule_id")
   assessmentId Int?         @map("assessment_id")
@@ -252,7 +221,6 @@ model Reminder {
   sentAt       DateTime?    @map("sent_at")
   createdAt    DateTime     @default(now()) @map("created_at")
 
-  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   task       Task?       @relation(fields: [taskId], references: [id])
   schedule   Schedule?   @relation(fields: [scheduleId], references: [id])
   assessment Assessment? @relation(fields: [assessmentId], references: [id])
@@ -269,7 +237,7 @@ enum ResourceType {
 model Resource {
   id        Int          @id @default(autoincrement())
   courseId  Int          @map("course_id")
-  userId    Int          @map("user_id")
+  userId    String       @map("user_id")
   type      ResourceType
   title     String
   content   String?      @db.Text
@@ -279,14 +247,13 @@ model Resource {
   updatedAt DateTime     @updatedAt @map("updated_at")
 
   course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("resources")
 }
 
 model Group {
   id           Int      @id @default(autoincrement())
-  ownerId      Int      @map("owner_id")
+  ownerId      String   @map("owner_id")
   name         String
   description  String?  @db.Text
   inviteCode   String   @unique @map("invite_code")
@@ -296,7 +263,6 @@ model Group {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  owner       User          @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   members     GroupMember[]
   sharedTasks SharedTask[]
   discussions Discussion[]
@@ -313,12 +279,11 @@ enum GroupRole {
 model GroupMember {
   id       Int       @id @default(autoincrement())
   groupId  Int       @map("group_id")
-  userId   Int       @map("user_id")
+  userId   String    @map("user_id")
   role     GroupRole @default(member)
   joinedAt DateTime  @default(now()) @map("joined_at")
 
   group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([groupId, userId])
   @@map("group_members")
@@ -327,17 +292,15 @@ model GroupMember {
 model SharedTask {
   id          Int      @id @default(autoincrement())
   groupId     Int      @map("group_id")
-  assigneeId  Int?     @map("assignee_id")
-  createdBy   Int      @map("created_by")
+  assigneeId  String?  @map("assignee_id")
+  createdBy   String   @map("created_by")
   title       String
   description String?  @db.Text
   completed   Boolean  @default(false)
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  group    Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  assignee User? @relation("SharedTaskAssignee", fields: [assigneeId], references: [id])
-  creator  User  @relation("SharedTaskCreator", fields: [createdBy], references: [id])
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
   @@map("shared_tasks")
 }
@@ -345,12 +308,11 @@ model SharedTask {
 model Discussion {
   id        Int      @id @default(autoincrement())
   groupId   Int      @map("group_id")
-  userId    Int      @map("user_id")
+  userId    String   @map("user_id")
   message   String   @db.Text
   createdAt DateTime @default(now()) @map("created_at")
 
   group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("discussions")
 }
