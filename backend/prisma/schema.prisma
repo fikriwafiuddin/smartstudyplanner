@@ -1,0 +1,356 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int             @id @default(autoincrement())
+  clerkUserId   String          @unique @map("clerk_user_id")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+  
+  preferences   UserPreference?
+  semesters     Semester[]
+  courses       Course[]
+  tasks         Task[]
+  schedules     Schedule[]
+  studySessions StudySession[]
+  reminders     Reminder[]
+  attendance    AttendanceRecord[]
+  ownedGroups   Group[]         @relation("GroupOwner")
+  groupMemberships GroupMember[]
+  discussions   Discussion[]
+  createdSharedTasks SharedTask[] @relation("SharedTaskCreator")
+  assignedSharedTasks SharedTask[] @relation("SharedTaskAssignee")
+  resources     Resource[]
+
+  @@map("users")
+}
+
+model UserPreference {
+  id                     Int      @id @default(autoincrement())
+  userId                 Int      @unique @map("user_id")
+  timezone               String
+  reminderDefaultMinutes Int      @default(30) @map("reminder_default_minutes")
+  startOfWeek            Int      @default(0) @map("start_of_week")
+  workingHoursStart      String   @default("08:00") @map("working_hours_start")
+  workingHoursEnd        String   @default("22:00") @map("working_hours_end")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+}
+
+model Semester {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  name      String
+  startDate DateTime @map("start_date")
+  endDate   DateTime @map("end_date")
+  isActive  Boolean  @default(false) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courses     Course[]
+  schedules   Schedule[]
+  assessments Assessment[]
+
+  @@map("semesters")
+}
+
+model Course {
+  id                Int      @id @default(autoincrement())
+  userId            Int      @map("user_id")
+  semesterId        Int      @map("semester_id")
+  name              String
+  code              String?
+  color             String
+  totalMeetings     Int      @map("total_meetings")
+  completedMeetings Int      @default(0) @map("completed_meetings")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  semester      Semester       @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+  tasks         Task[]
+  schedules     Schedule[]
+  assessments   Assessment[]
+  studySessions StudySession[]
+  resources     Resource[]
+
+  @@map("courses")
+}
+
+enum Priority {
+  high
+  medium
+  low
+}
+
+model Task {
+  id           Int      @id @default(autoincrement())
+  userId       Int      @map("user_id")
+  courseId     Int      @map("course_id")
+  parentTaskId Int?     @map("parent_task_id")
+  title        String
+  description  String?  @db.Text
+  deadline     DateTime
+  priority     Priority
+  completed    Boolean  @default(false)
+  orderIndex   Int      @default(0) @map("order_index")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course        Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  parentTask    Task?          @relation("SubTasks", fields: [parentTaskId], references: [id])
+  subtasks      Task[]         @relation("SubTasks")
+  studySessions StudySession[]
+  reminders     Reminder[]
+
+  @@map("tasks")
+}
+
+enum AssessmentType {
+  exam
+  quiz
+  project
+  paper
+  assignment
+}
+
+model Assessment {
+  id               Int            @id @default(autoincrement())
+  courseId         Int            @map("course_id")
+  semesterId       Int            @map("semester_id")
+  type             AssessmentType
+  name             String
+  date             DateTime
+  weightPercentage Float          @map("weight_percentage")
+  score            Float?
+  maxScore         Float          @map("max_score")
+  grade            String?
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+
+  course    Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  semester  Semester   @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+  reminders Reminder[]
+
+  @@map("assessments")
+}
+
+model StudySession {
+  id              Int      @id @default(autoincrement())
+  userId          Int      @map("user_id")
+  courseId        Int?     @map("course_id")
+  taskId          Int?     @map("task_id")
+  startedAt       DateTime @map("started_at")
+  endedAt         DateTime? @map("ended_at")
+  durationMinutes Int      @map("duration_minutes")
+  notes           String?  @db.Text
+  focusRating     Int?     @map("focus_rating")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course? @relation(fields: [courseId], references: [id])
+  task   Task?   @relation(fields: [taskId], references: [id])
+
+  @@map("study_sessions")
+}
+
+enum ScheduleType {
+  course
+  activity
+  event
+}
+
+enum ScheduleStatus {
+  active
+  paused
+  archived
+}
+
+model Schedule {
+  id          String         @id @default(uuid())
+  userId      Int            @map("user_id")
+  courseId    Int?           @map("course_id")
+  semesterId  Int?           @map("semester_id")
+  type        ScheduleType
+  name        String
+  code        String?
+  lecturer    String?
+  organizer   String?
+  location    String
+  day         Int            // 0-6
+  startHour   String         @map("start_hour")
+  duration    String
+  color       String
+  description String?        @db.Text
+  isRecurring Boolean        @default(true) @map("is_recurring")
+  eventDate   DateTime?      @map("event_date")
+  status      ScheduleStatus @default(active)
+  pausedAt    DateTime?      @map("paused_at")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course     Course?            @relation(fields: [courseId], references: [id])
+  semester   Semester?          @relation(fields: [semesterId], references: [id])
+  attendance AttendanceRecord[]
+  reminders  Reminder[]
+
+  @@map("schedules")
+}
+
+enum AttendanceStatus {
+  present
+  absent
+  late
+  excused
+}
+
+model AttendanceRecord {
+  id         Int              @id @default(autoincrement())
+  scheduleId String           @map("schedule_id")
+  userId     Int              @map("user_id")
+  date       DateTime
+  status     AttendanceStatus
+  notes      String?          @db.Text
+  createdAt  DateTime         @default(now()) @map("created_at")
+
+  schedule Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("attendance_records")
+}
+
+enum ReminderType {
+  push
+  email
+}
+
+model Reminder {
+  id           Int          @id @default(autoincrement())
+  userId       Int          @map("user_id")
+  taskId       Int?         @map("task_id")
+  scheduleId   String?      @map("schedule_id")
+  assessmentId Int?         @map("assessment_id")
+  remindAt     DateTime     @map("remind_at")
+  type         ReminderType
+  isSent       Boolean      @default(false) @map("is_sent")
+  sentAt       DateTime?    @map("sent_at")
+  createdAt    DateTime     @default(now()) @map("created_at")
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task       Task?       @relation(fields: [taskId], references: [id])
+  schedule   Schedule?   @relation(fields: [scheduleId], references: [id])
+  assessment Assessment? @relation(fields: [assessmentId], references: [id])
+
+  @@map("reminders")
+}
+
+enum ResourceType {
+  note
+  link
+  file
+}
+
+model Resource {
+  id        Int          @id @default(autoincrement())
+  courseId  Int          @map("course_id")
+  userId    Int          @map("user_id")
+  type      ResourceType
+  title     String
+  content   String?      @db.Text
+  url       String?
+  filePath  String?      @map("file_path")
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("resources")
+}
+
+model Group {
+  id           Int      @id @default(autoincrement())
+  ownerId      Int      @map("owner_id")
+  name         String
+  description  String?  @db.Text
+  inviteCode   String   @unique @map("invite_code")
+  color        String
+  membersCount Int      @default(1) @map("members_count")
+  lastActive   DateTime @default(now()) @map("last_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  owner       User          @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members     GroupMember[]
+  sharedTasks SharedTask[]
+  discussions Discussion[]
+
+  @@map("groups")
+}
+
+enum GroupRole {
+  owner
+  admin
+  member
+}
+
+model GroupMember {
+  id       Int       @id @default(autoincrement())
+  groupId  Int       @map("group_id")
+  userId   Int       @map("user_id")
+  role     GroupRole @default(member)
+  joinedAt DateTime  @default(now()) @map("joined_at")
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@map("group_members")
+}
+
+model SharedTask {
+  id          Int      @id @default(autoincrement())
+  groupId     Int      @map("group_id")
+  assigneeId  Int?     @map("assignee_id")
+  createdBy   Int      @map("created_by")
+  title       String
+  description String?  @db.Text
+  completed   Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  group    Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  assignee User? @relation("SharedTaskAssignee", fields: [assigneeId], references: [id])
+  creator  User  @relation("SharedTaskCreator", fields: [createdBy], references: [id])
+
+  @@map("shared_tasks")
+}
+
+model Discussion {
+  id        Int      @id @default(autoincrement())
+  groupId   Int      @map("group_id")
+  userId    Int      @map("user_id")
+  message   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("discussions")
+}
