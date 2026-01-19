@@ -19,15 +19,24 @@ import {
   Users,
   BarChart3,
   Settings,
-  GraduationCapIcon,
+  GraduationCap,
+  BookOpen,
+  History,
+  Target,
+  ClipboardCheck,
+  FileText,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Schedule", url: "/schedule", icon: Calendar },
-  { title: "Courses", url: "/courses", icon: GraduationCapIcon },
+  { title: "Focus", url: "/focus", icon: Target },
+  { title: "Semesters", url: "/semesters", icon: History },
+  { title: "Courses", url: "/courses", icon: BookOpen },
   { title: "Tasks", url: "/tasks", icon: CheckSquare },
+  { title: "Assessments", url: "/assessments", icon: ClipboardCheck },
+  { title: "Resources", url: "/resources", icon: FileText },
   { title: "Study Groups", url: "/groups", icon: Users },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
   { title: "Settings", url: "/settings", icon: Settings },
@@ -44,7 +53,7 @@ function AppSidebar() {
       <SidebarHeader
         className={cn(
           "h-16 border-b border-border flex flex-col justify-center transition-all duration-200",
-          collapsed ? "px-0" : "px-4"
+          collapsed ? "px-0" : "px-4",
         )}
       >
         <SidebarMenu>
@@ -52,11 +61,11 @@ function AppSidebar() {
             <div
               className={cn(
                 "flex items-center gap-3 w-full",
-                collapsed ? "justify-center" : "px-0"
+                collapsed ? "justify-center" : "px-0",
               )}
             >
               <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center shrink-0 shadow-lg shadow-primary/20">
-                <GraduationCapIcon className="size-5 text-primary-foreground" />
+                <GraduationCap className="size-5 text-primary-foreground" />
               </div>
               {!collapsed && (
                 <div className="animate-fade-in flex flex-col">
@@ -75,7 +84,7 @@ function AppSidebar() {
       <SidebarContent
         className={cn(
           "py-4 transition-all duration-200",
-          collapsed ? "px-0" : "px-3"
+          collapsed ? "px-0" : "px-3",
         )}
       >
         <SidebarMenu className="gap-1">
@@ -95,20 +104,20 @@ function AppSidebar() {
                     collapsed ? "justify-center size-10! px-0" : "px-3 py-5",
                     isActive
                       ? "bg-primary! text-primary-foreground! hover:text-primary-foreground!"
-                      : "text-muted-foreground hover:bg-primary! hover:text-primary-foreground!"
+                      : "text-muted-foreground hover:bg-primary! hover:text-primary-foreground!",
                   )}
                 >
                   <Link
                     href={item.url}
                     className={cn(
                       "flex items-center",
-                      collapsed ? "justify-center w-full" : "gap-3"
+                      collapsed ? "justify-center w-full" : "gap-3",
                     )}
                   >
                     <item.icon
                       className={cn(
                         "size-5! shrink-0 transition-transform duration-200",
-                        !isActive && "group-hover/item:scale-110"
+                        !isActive && "group-hover/item:scale-110",
                       )}
                     />
                     {!collapsed && (
@@ -128,13 +137,13 @@ function AppSidebar() {
       <SidebarFooter
         className={cn(
           "p-3 border-t border-border bg-card/50 transition-all duration-200",
-          collapsed && "px-0"
+          collapsed && "px-0",
         )}
       >
         <div
           className={cn(
             "flex items-center gap-3 p-2 rounded-lg bg-secondary/50 border border-border/50 transition-all duration-200",
-            collapsed ? "justify-center p-0 size-10! mx-auto" : "p-2"
+            collapsed ? "justify-center p-0 size-10! mx-auto" : "p-2",
           )}
         >
           <div className="w-9 h-9 rounded-full bg-gradient-primary flex items-center justify-center shrink-0 shadow-sm">

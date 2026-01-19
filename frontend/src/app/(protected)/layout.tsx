@@ -2,6 +2,7 @@ import AppHeader from "@/components/layout/AppHeader"
 import AppSidebar from "@/components/layout/AppSidebar"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { ReactNode } from "react"
+import DeadlineAlerts from "./_components/DeadlineAlerts"
 
 export default function ProtectedLayout({
   children,
@@ -12,6 +13,7 @@ export default function ProtectedLayout({
       <SidebarInset className="overflow-hidden">
         <main className="flex-1">
           <AppHeader />
+          <DeadlineAlerts />
           <div className="p-6 space-y-6">{children}</div>
         </main>
       </SidebarInset>

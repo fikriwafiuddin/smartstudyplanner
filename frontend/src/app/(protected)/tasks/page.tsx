@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { CheckCircle2Icon, PlusIcon, SearchIcon } from "lucide-react"
 import { useState } from "react"
+import { useSemester } from "@/context/SemesterContext"
 import {
   DndContext,
   closestCenter,
@@ -30,72 +31,129 @@ import { calculatePriority } from "@/helpers/taskHelper"
 const tasksData: Task[] = [
   {
     id: 1,
+    userId: 1,
+    semesterId: 1,
+    courseId: 101,
+    parentTaskId: null,
     title: "Complete Algorithm Assignment",
     course: "Data Structures",
     deadline: "2025-01-12",
     priority: "high",
     completed: false,
+    orderIndex: 0,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
     description: "Implement quicksort and mergesort algorithms",
   },
   {
     id: 2,
+    userId: 1,
+    semesterId: 1,
+    courseId: 102,
+    parentTaskId: null,
     title: "Read Chapter 5 - Matrix Operations",
     course: "Linear Algebra",
     deadline: "2025-01-13",
     priority: "medium",
     completed: false,
+    orderIndex: 1,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
   {
     id: 3,
+    userId: 1,
+    semesterId: 1,
+    courseId: 103,
+    parentTaskId: null,
     title: "Prepare presentation slides",
     course: "Database Systems",
-    deadline: "2025-01-14",
+    deadline: "2024-01-14",
     priority: "medium",
     completed: false,
+    orderIndex: 2,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
   {
     id: 4,
+    userId: 1,
+    semesterId: 1,
+    courseId: null,
+    parentTaskId: null,
     title: "Submit lab report",
     course: "Physics",
-    deadline: "2025-01-11",
+    deadline: "2024-01-11",
     priority: "high",
     completed: true,
+    orderIndex: 3,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
   {
     id: 5,
+    userId: 1,
+    semesterId: 2,
+    courseId: 104,
+    parentTaskId: null,
     title: "Review lecture notes",
     course: "Computer Networks",
     deadline: "2025-01-15",
     priority: "low",
     completed: false,
+    orderIndex: 4,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
   {
     id: 6,
+    userId: 1,
+    semesterId: 2,
+    courseId: 103,
+    parentTaskId: null,
     title: "Complete ER diagram",
     course: "Database Systems",
     deadline: "2025-01-16",
     priority: "medium",
     completed: false,
+    orderIndex: 5,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
   {
     id: 7,
+    userId: 1,
+    semesterId: 2,
+    courseId: 101,
+    parentTaskId: null,
     title: "Study for midterm",
     course: "Data Structures",
     deadline: "2025-01-20",
     priority: "high",
     completed: false,
+    orderIndex: 6,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
   {
     id: 8,
+    userId: 1,
+    semesterId: 2,
+    courseId: null,
+    parentTaskId: null,
     title: "Group project meeting prep",
     course: "Software Engineering",
     deadline: "2025-01-11",
     priority: "medium",
     completed: true,
+    orderIndex: 7,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
 ]
 
 function TasksPage() {
+  const { activeSemester } = useSemester()
   const [tasks, setTasks] = useState(tasksData)
   const [filter, setFilter] = useState<FilterType>("all")
   const [search, setSearch] = useState("")
@@ -110,14 +168,14 @@ function TasksPage() {
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   )
 
   const toggleTask = (taskId: number) => {
     setTasks(
       tasks.map((task) =>
-        task.id === taskId ? { ...task, completed: !task.completed } : task
-      )
+        task.id === taskId ? { ...task, completed: !task.completed } : task,
+      ),
     )
   }
 
@@ -149,12 +207,19 @@ function TasksPage() {
 
   const handleCreateTask = (values: TaskFormValues) => {
     const newTask: Task = {
-      id: Math.max(...tasks.map((t) => t.id)) + 1,
+      id: Math.max(0, ...tasks.map((t) => t.id)) + 1,
+      userId: 1,
+      semesterId: activeSemester?.id || 1,
+      courseId: null,
+      parentTaskId: null,
       title: values.title,
       course: values.course,
       deadline: values.deadline.toISOString().split("T")[0],
       priority: values.priority,
       completed: false,
+      orderIndex: tasks.length,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       description: values.description,
     }
     setTasks([newTask, ...tasks])
@@ -173,8 +238,8 @@ function TasksPage() {
               priority: values.priority,
               description: values.description,
             }
-          : task
-      )
+          : task,
+      ),
     )
     setEditingTask(null)
   }
@@ -190,9 +255,12 @@ function TasksPage() {
   }
 
   const filteredTasks = tasks.filter((task) => {
+    const matchesSemester = task.semesterId === activeSemester?.id
     const matchesSearch =
       task.title.toLowerCase().includes(search.toLowerCase()) ||
-      task.course.toLowerCase().includes(search.toLowerCase())
+      (task.course?.toLowerCase() || "").includes(search.toLowerCase())
+
+    if (!matchesSemester) return false
 
     const today = new Date().toISOString().split("T")[0]
 

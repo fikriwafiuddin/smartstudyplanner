@@ -1,5 +1,6 @@
 "use client"
 
+import { ScheduleItem } from "@/types"
 import {
   Dialog,
   DialogClose,
@@ -12,6 +13,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -31,7 +33,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { scheduleFormSchema } from "@/validations/scheduleValidation"
 import { ScheduleFormValues } from "@/types/form"
 import { Button } from "../ui/button"
-import { ScheduleItem } from "@/types"
+import { Switch } from "../ui/switch"
+import { StopCircle } from "lucide-react"
 
 const colors = [
   { value: "bg-primary", label: "Blue", preview: "bg-primary" },
@@ -66,44 +69,58 @@ const durations = [
   { value: "4", label: "4 hours" },
 ]
 
-const semesters = [
-  { value: "1", label: "Odd Semester 2023/2024" },
-  { value: "2", label: "Even Semester 2023/2024" },
-]
-
-type CourseFormProps = {
+type ActivityFormProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  mode: "create" | "edit"
-  course?: ScheduleItem
+  schedule?: ScheduleItem | null
 }
 
-function CourseForm({ open, onOpenChange, mode, course }: CourseFormProps) {
+function ActivityForm({ open, onOpenChange, schedule }: ActivityFormProps) {
   const form = useForm<ScheduleFormValues>({
     resolver: zodResolver(scheduleFormSchema),
-    defaultValues: {
-      type: "course",
-      name: course?.name || "",
-      code: course?.code || "",
-      lecturer: course?.lecturer || "",
-      organizer: course?.organizer || "",
-      location: course?.location || "",
-      day: course ? String(course.day) : "",
-      startHour: course?.startHour || "",
-      duration: course?.duration || "1",
-      color: course?.color || "bg-primary",
-      description: course?.description || "",
-      isRecurring: true,
-      eventDate: course?.eventDate || "",
-      stoppedAt: course?.stoppedAt || "",
-      semesterId: course?.semesterId ? String(course.semesterId) : "",
-      isActive: course?.status !== "inactive",
-      courseId: course?.courseId ? String(course.courseId) : "",
-    },
+    defaultValues: schedule
+      ? {
+          type: "activity",
+          name: schedule.name,
+          organizer: schedule.organizer || "",
+          location: schedule.location,
+          day: String(schedule.day),
+          startHour: schedule.startHour,
+          duration: schedule.duration,
+          color: schedule.color,
+          description: schedule.description || "",
+          isRecurring: schedule.isRecurring || false,
+          eventDate: "",
+          stoppedAt: schedule.stoppedAt || "",
+          semesterId: schedule.semesterId ? String(schedule.semesterId) : "",
+          isActive: schedule.status !== "inactive",
+          courseId: schedule.courseId ? String(schedule.courseId) : "",
+          code: schedule.code || "",
+          lecturer: schedule.lecturer || "",
+        }
+      : {
+          type: "activity",
+          name: "",
+          organizer: "",
+          location: "",
+          day: "",
+          startHour: "",
+          duration: "1",
+          color: "bg-primary",
+          description: "",
+          isRecurring: true,
+          eventDate: "",
+          stoppedAt: "",
+          semesterId: "",
+          isActive: true,
+          courseId: "",
+          code: "",
+          lecturer: "",
+        },
   })
 
   const handleSubmit: SubmitHandler<ScheduleFormValues> = (data) => {
-    console.log(data)
+    console.log("Submitting activity:", data)
     onOpenChange(false)
   }
 
@@ -112,12 +129,12 @@ function CourseForm({ open, onOpenChange, mode, course }: CourseFormProps) {
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {mode === "create" ? "Add Course" : "Edit Course"}
+            {schedule ? "Edit Activity" : "Add Activity"}
           </DialogTitle>
           <DialogDescription>
-            {mode === "create"
-              ? "Define your course schedule and details."
-              : "Update course details."}
+            {schedule
+              ? "Update details for your recurring activity."
+              : "Add a routine activity to your schedule."}
           </DialogDescription>
         </DialogHeader>
 
@@ -128,40 +145,15 @@ function CourseForm({ open, onOpenChange, mode, course }: CourseFormProps) {
           >
             <FormField
               control={form.control}
-              name="semesterId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Semester</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select semester" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {semesters.map((s) => (
-                        <SelectItem key={s.value} value={s.value}>
-                          {s.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Course Name</FormLabel>
+                  <FormLabel>Activity Name</FormLabel>
                   <FormControl>
-                    <Input placeholder={"e.g., Data Structures"} {...field} />
+                    <Input
+                      placeholder="e.g., Student Council Meeting"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -171,12 +163,12 @@ function CourseForm({ open, onOpenChange, mode, course }: CourseFormProps) {
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="code"
+                name="organizer"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Course Code</FormLabel>
+                    <FormLabel>Organizer</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., CS201" {...field} />
+                      <Input placeholder="e.g., Tech Club" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -233,20 +225,6 @@ function CourseForm({ open, onOpenChange, mode, course }: CourseFormProps) {
 
             <FormField
               control={form.control}
-              name="lecturer"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Lecturer</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., Dr. Smith" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
               name="location"
               render={({ field }) => (
                 <FormItem>
@@ -271,7 +249,7 @@ function CourseForm({ open, onOpenChange, mode, course }: CourseFormProps) {
                     <FormLabel>Day</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={String(field.value)}
+                      defaultValue={field.value}
                     >
                       <FormControl>
                         <SelectTrigger className="w-full">
@@ -299,7 +277,7 @@ function CourseForm({ open, onOpenChange, mode, course }: CourseFormProps) {
                     <FormLabel>Start Time</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={String(field.value)}
+                      defaultValue={field.value}
                     >
                       <FormControl>
                         <SelectTrigger className="w-full">
@@ -328,7 +306,7 @@ function CourseForm({ open, onOpenChange, mode, course }: CourseFormProps) {
                   <FormLabel>Duration</FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    defaultValue={String(field.value)}
+                    defaultValue={field.value}
                   >
                     <FormControl>
                       <SelectTrigger className="w-full">
@@ -347,6 +325,74 @@ function CourseForm({ open, onOpenChange, mode, course }: CourseFormProps) {
                 </FormItem>
               )}
             />
+
+            <div className="space-y-4 pt-2">
+              <div className="p-3 border rounded-lg bg-muted/30 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-sm font-semibold flex items-center gap-2">
+                      <StopCircle className="w-4 h-4 text-destructive" />
+                      Stop Schedule
+                    </FormLabel>
+                    <FormDescription className="text-xs text-muted-foreground leading-tight">
+                      Set a date to stop this recurring activity.
+                    </FormDescription>
+                  </div>
+                  {schedule && (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="text-xs h-7 px-2"
+                      onClick={() => {
+                        const today = new Date().toISOString().split("T")[0]
+                        form.setValue("stoppedAt", today)
+                      }}
+                    >
+                      Stop Now
+                    </Button>
+                  )}
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="stoppedAt"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input
+                          type="date"
+                          {...field}
+                          className="bg-background"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="isRecurring"
+                render={({ field }) => (
+                  <FormItem className="flex items-center justify-between rounded-lg border p-3">
+                    <div className="space-y-0.5">
+                      <FormLabel>Recurring Weekly</FormLabel>
+                      <FormDescription>
+                        This activity repeats every week
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <FormField
               control={form.control}
@@ -374,7 +420,7 @@ function CourseForm({ open, onOpenChange, mode, course }: CourseFormProps) {
                 </Button>
               </DialogClose>
               <Button type="submit">
-                {mode === "create" ? "Add to Schedule" : "Save Changes"}
+                {schedule ? "Save Changes" : "Add Activity"}
               </Button>
             </DialogFooter>
           </form>
@@ -384,4 +430,4 @@ function CourseForm({ open, onOpenChange, mode, course }: CourseFormProps) {
   )
 }
 
-export default CourseForm
+export default ActivityForm

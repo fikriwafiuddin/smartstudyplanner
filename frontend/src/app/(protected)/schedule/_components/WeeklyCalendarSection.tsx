@@ -1,106 +1,166 @@
 "use client"
 
-import ScheduleForm from "@/components/schedule/ScheduleForm"
+import ActivityForm from "@/components/schedule/ActivityForm"
+import EventForm from "@/components/schedule/EventForm"
+import CourseForm from "@/components/courses/CourseForm"
 import { cn } from "@/lib/utils"
 import { ScheduleItem, ScheduleItemType } from "@/types"
-import { BookOpenIcon, CalendarIcon, UsersIcon } from "lucide-react"
+import {
+  BookOpenIcon,
+  CalendarIcon,
+  UsersIcon,
+  CheckCircle2Icon,
+  PauseIcon,
+  PlayIcon,
+} from "lucide-react"
 import { useState } from "react"
+import { toast } from "sonner"
+
+import { Badge } from "@/components/ui/badge"
+import { useSemester } from "@/context/SemesterContext"
 
 const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-const hours = [
-  "08:00",
-  "09:00",
-  "10:00",
-  "11:00",
-  "12:00",
-  "13:00",
-  "14:00",
-  "15:00",
-  "16:00",
-  "17:00",
-  "18:00",
-]
+const hours = Array.from(
+  { length: 14 },
+  (_, i) => `${(8 + i).toString().padStart(2, "0")}:00`,
+)
+
 const schedule: ScheduleItem[] = [
   {
     id: "1",
+    userId: 1,
+    courseId: 101,
+    semesterId: 1,
     type: "course",
     name: "Data Structures",
     code: "CS201",
     lecturer: "Dr. Smith",
     location: "Room 301",
-    day: "0",
-    startHour: "9",
+    day: 0,
+    startHour: "09:00",
     duration: "2",
     color: "bg-primary",
     description: "Introduction to data structures and algorithms",
     isRecurring: true,
+    status: "active",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
   {
     id: "2",
+    userId: 1,
+    courseId: 102,
+    semesterId: 1,
     type: "course",
     name: "Linear Algebra",
     code: "MATH301",
     lecturer: "Prof. Johnson",
     location: "Room 205",
-    day: "1",
-    startHour: "11",
+    day: 1,
+    startHour: "11:00",
     duration: "1",
     color: "bg-accent",
     isRecurring: true,
+    status: "active",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
   {
     id: "3",
+    userId: 1,
+    courseId: 103,
+    semesterId: 1,
     type: "course",
     name: "Database Systems",
     code: "CS301",
     lecturer: "Dr. Williams",
     location: "Room 401",
-    day: "2",
-    startHour: "14",
+    day: 2,
+    startHour: "14:00",
     duration: "2",
     color: "bg-success",
     description: "Relational databases and SQL",
     isRecurring: true,
+    status: "active",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
   {
     id: "4",
+    userId: 1,
+    courseId: 104,
+    semesterId: 1,
     type: "course",
     name: "Computer Networks",
     code: "CS401",
     lecturer: "Prof. Brown",
     location: "Room 102",
-    day: "3",
-    startHour: "10",
+    day: 3,
+    startHour: "10:00",
     duration: "1",
     color: "bg-warning",
     isRecurring: true,
+    status: "active",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
   {
     id: "5",
+    userId: 1,
+    courseId: null,
+    semesterId: 1,
     type: "activity",
     name: "Student Council Meeting",
     organizer: "Student Affairs",
     location: "Meeting Room A",
-    day: "4",
-    startHour: "15",
+    day: 4,
+    startHour: "15:00",
     duration: "2",
     color: "bg-indigo-500",
     description: "Weekly organizational meeting",
     isRecurring: true,
+    status: "active",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
   {
     id: "6",
+    userId: 1,
+    courseId: null,
+    semesterId: 1,
     type: "event",
     name: "AI Workshop Seminar",
     organizer: "Tech Club",
     location: "Auditorium",
-    day: "2",
-    startHour: "16",
+    day: 2,
+    startHour: "16:00",
     duration: "3",
     color: "bg-pink-500",
     description: "Introduction to Machine Learning",
     isRecurring: false,
     eventDate: "2025-01-08",
+    status: "active",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "7",
+    userId: 1,
+    courseId: 104,
+    semesterId: 2,
+    type: "course",
+    name: "Advanced Networking",
+    code: "CS402",
+    lecturer: "Prof. Brown",
+    location: "Room 105",
+    day: 1,
+    startHour: "09:00",
+    duration: "2",
+    color: "bg-orange-500",
+    isRecurring: true,
+    status: "active",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
 ]
 
@@ -126,25 +186,64 @@ const getTypeLabel = (type: ScheduleItemType) => {
   }
 }
 
-const getItemAtTime = (dayIndex: number, hour: number) => {
-  return schedule.find(
-    (item) =>
-      parseInt(item.day) === dayIndex &&
-      hour >= parseInt(item.startHour) &&
-      hour < parseInt(item.startHour) + parseInt(item.duration),
-  )
-}
-
-const isFirstHourOfItem = (dayIndex: number, hour: number) => {
-  const item = getItemAtTime(dayIndex, hour)
-  return item && parseInt(item.startHour) === hour
-}
-
 function WeeklyCalendarSection() {
-  const [editingItem, setEditingItem] = useState<boolean>(false)
+  const { activeSemester } = useSemester()
+
+  const getItemAtTime = (dayIndex: number, hour: number) => {
+    return schedule.find(
+      (item) =>
+        item.semesterId === activeSemester?.id &&
+        item.day === dayIndex &&
+        hour >= parseInt(item.startHour) &&
+        hour < parseInt(item.startHour) + parseInt(item.duration),
+    )
+  }
+
+  const isFirstHourOfItem = (dayIndex: number, hour: number) => {
+    const item = getItemAtTime(dayIndex, hour)
+    return item && parseInt(item.startHour) === hour
+  }
+
+  const [editingActivity, setEditingActivity] = useState<boolean>(false)
+  const [editingEvent, setEditingEvent] = useState<boolean>(false)
+  const [editingCourse, setEditingCourse] = useState<boolean>(false)
   const [selectedSchedule, setSelectedSchedule] = useState<ScheduleItem | null>(
     null,
   )
+  const [checkedInItems, setCheckedInItems] = useState<Set<string>>(new Set())
+  const [pausedItems, setPausedItems] = useState<Set<string>>(new Set())
+
+  const handleCheckIn = (e: React.MouseEvent, item: ScheduleItem) => {
+    e.stopPropagation()
+    setCheckedInItems((prev) => new Set(prev).add(item.id))
+    toast.success(`Checked in to ${item.name}`)
+  }
+
+  const handleTogglePause = (e: React.MouseEvent, item: ScheduleItem) => {
+    e.stopPropagation()
+    setPausedItems((prev) => {
+      const next = new Set(prev)
+      if (next.has(item.id)) {
+        next.delete(item.id)
+        toast.info(`Resumed ${item.name}`)
+      } else {
+        next.add(item.id)
+        toast.info(`Paused ${item.name} for this week`)
+      }
+      return next
+    })
+  }
+
+  const handleItemClick = (item: ScheduleItem) => {
+    setSelectedSchedule(item)
+    if (item.type === "course") {
+      setEditingCourse(true)
+    } else if (item.type === "activity") {
+      setEditingActivity(true)
+    } else if (item.type === "event") {
+      setEditingEvent(true)
+    }
+  }
 
   return (
     <>
@@ -189,32 +288,63 @@ function WeeklyCalendarSection() {
                         {isFirst && item && (
                           <div
                             className={cn(
-                              "absolute inset-x-1 top-1 rounded-lg p-2 text-white shadow-sm cursor-pointer hover:opacity-90 transition-opacity z-10",
+                              "absolute inset-x-1 top-1 rounded-lg p-2 text-white shadow-sm cursor-pointer hover:opacity-90 transition-all z-10",
                               item.color,
+                              pausedItems.has(item.id) &&
+                                "grayscale opacity-60",
                             )}
                             style={{
                               height: `${parseInt(item.duration) * 64 - 8}px`,
                             }}
-                            onClick={() => {
-                              setEditingItem(true)
-                              setSelectedSchedule(item)
-                            }}
-                            onContextMenu={(e) => {
-                              e.preventDefault()
-                            }}
+                            onClick={() => handleItemClick(item)}
                           >
-                            <div className="flex items-center gap-1 mb-0.5">
-                              {getTypeIcon(item.type)}
-                              <span className="text-[10px] opacity-80">
-                                {getTypeLabel(item.type)}
-                              </span>
+                            <div className="flex items-center justify-between mb-0.5">
+                              <div className="flex items-center gap-1">
+                                {getTypeIcon(item.type)}
+                                <span className="text-[10px] opacity-80">
+                                  {getTypeLabel(item.type)}
+                                </span>
+                              </div>
+                              {pausedItems.has(item.id) && (
+                                <Badge
+                                  variant="secondary"
+                                  className="text-[8px] h-3 px-1 bg-white/20 text-white border-none"
+                                >
+                                  Paused
+                                </Badge>
+                              )}
                             </div>
                             <p className="font-medium text-sm truncate">
                               {item.name}
                             </p>
-                            <p className="text-xs opacity-90 truncate">
-                              {item.lecturer || item.organizer}
-                            </p>
+                            <div className="flex items-center justify-between mt-1">
+                              <p className="text-xs opacity-90 truncate max-w-[70%]">
+                                {item.lecturer || item.organizer}
+                              </p>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  onClick={(e) => handleCheckIn(e, item)}
+                                  className={cn(
+                                    "p-1 rounded-full transition-all",
+                                    checkedInItems.has(item.id)
+                                      ? "bg-white/20 text-white"
+                                      : "hover:bg-white/20 text-white/60 hover:text-white",
+                                  )}
+                                >
+                                  <CheckCircle2Icon className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={(e) => handleTogglePause(e, item)}
+                                  className="p-1 rounded-full hover:bg-white/20 text-white/60 hover:text-white transition-all"
+                                >
+                                  {pausedItems.has(item.id) ? (
+                                    <PlayIcon className="w-4 h-4" />
+                                  ) : (
+                                    <PauseIcon className="w-4 h-4" />
+                                  )}
+                                </button>
+                              </div>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -227,10 +357,23 @@ function WeeklyCalendarSection() {
         </div>
       </div>
 
-      <ScheduleForm
+      <ActivityForm
         schedule={selectedSchedule}
-        open={editingItem}
-        onOpenChange={setEditingItem}
+        open={editingActivity}
+        onOpenChange={setEditingActivity}
+      />
+
+      <EventForm
+        schedule={selectedSchedule}
+        open={editingEvent}
+        onOpenChange={setEditingEvent}
+      />
+
+      <CourseForm
+        course={selectedSchedule || undefined}
+        open={editingCourse}
+        onOpenChange={setEditingCourse}
+        mode="edit"
       />
     </>
   )

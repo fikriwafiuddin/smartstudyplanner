@@ -75,8 +75,7 @@ function CourseCard({ course }: CourseCardProps) {
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Clock className="w-4 h-4" />
             <span>
-              {days[parseInt(course.day)]}, {course.startHour}:00 (
-              {course.duration}h)
+              {days[course.day]}, {course.startHour}:00 ({course.duration}h)
             </span>
           </div>
           {course.description && (
