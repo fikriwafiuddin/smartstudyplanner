@@ -1,6 +1,7 @@
 import express from "express"
 import { ErrorResponse, SuccessResponse } from "../utils/response.js"
 import errorMiddleware from "../middleware/errorMiddleware.js"
+import semesterRouter from "./semesterRouter.js"
 
 const router = express.Router()
 
@@ -10,10 +11,12 @@ router.get("/health", (req, res) => {
 })
 
 // Routes
+router.use("/semesters", semesterRouter)
 
 router.get("/", (req, res) => {
   return res.json(new SuccessResponse("Welcome to SmartStudyPlanner API"))
 })
+
 router.all(/.*/, (req, res) => {
   return res.status(404).json(new ErrorResponse("Not Found", 404))
 })
