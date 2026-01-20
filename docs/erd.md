@@ -3,22 +3,22 @@
 This document outlines the database schema design for the Smart Study Planner application.
 
 > [!NOTE]
-> This ERD uses **Clerk** for authentication. The USERS table stores only the Clerk user ID mapping for database relationships.
+> This ERD uses **Supabase Auth** for authentication. The USERS table uses UUID from `auth.users` as the primary key.
 
 ## Entity Relationship Diagram
 
 ```mermaid
 erDiagram
     USERS {
-        int id PK
-        string clerk_user_id UK "From Clerk"
+        uuid id PK "From auth.users"
+        string email UK
         timestamp created_at
         timestamp updated_at
     }
 
     USER_PREFERENCES {
         int id PK
-        int user_id FK UK
+        uuid user_id FK UK
         string timezone
         int reminder_default_minutes
         int start_of_week "0-6"
@@ -29,7 +29,7 @@ erDiagram
 
     SEMESTERS {
         int id PK
-        int user_id FK
+        uuid user_id FK
         string name "e.g. Fall 2025"
         date start_date
         date end_date
@@ -40,7 +40,7 @@ erDiagram
 
     COURSES {
         int id PK
-        int user_id FK
+        uuid user_id FK
         int semester_id FK
         string name
         string code
@@ -53,7 +53,7 @@ erDiagram
 
     TASKS {
         int id PK
-        int user_id FK
+        uuid user_id FK
         int course_id FK
         int parent_task_id FK "nullable, for subtasks"
         string title
@@ -83,7 +83,7 @@ erDiagram
 
     STUDY_SESSIONS {
         int id PK
-        int user_id FK
+        uuid user_id FK
         int course_id FK "nullable"
         int task_id FK "nullable"
         timestamp started_at
@@ -96,7 +96,7 @@ erDiagram
 
     SCHEDULES {
         string id PK
-        int user_id FK
+        uuid user_id FK
         int course_id FK "nullable"
         int semester_id FK "nullable"
         enum type "course|activity|event"
@@ -121,7 +121,7 @@ erDiagram
     ATTENDANCE_RECORDS {
         int id PK
         int schedule_id FK
-        int user_id FK
+        uuid user_id FK
         date date
         enum status "present|absent|late|excused"
         text notes
@@ -130,7 +130,7 @@ erDiagram
 
     REMINDERS {
         int id PK
-        int user_id FK
+        uuid user_id FK
         int task_id FK "nullable"
         int schedule_id FK "nullable"
         int assessment_id FK "nullable"
@@ -144,7 +144,7 @@ erDiagram
     RESOURCES {
         int id PK
         int course_id FK
-        int user_id FK
+        uuid user_id FK
         enum type "note|link|file"
         string title
         text content "nullable"
@@ -156,7 +156,7 @@ erDiagram
 
     GROUPS {
         int id PK
-        int owner_id FK
+        uuid owner_id FK
         string name
         text description
         string invite_code UK
@@ -170,7 +170,7 @@ erDiagram
     GROUP_MEMBERS {
         int id PK
         int group_id FK
-        int user_id FK
+        uuid user_id FK
         enum role "owner|admin|member"
         timestamp joined_at
     }
@@ -178,8 +178,8 @@ erDiagram
     SHARED_TASKS {
         int id PK
         int group_id FK
-        int assignee_id FK "nullable"
-        int created_by FK
+        uuid assignee_id FK "nullable"
+        uuid created_by FK
         string title
         text description
         boolean completed
@@ -190,7 +190,7 @@ erDiagram
     DISCUSSIONS {
         int id PK
         int group_id FK
-        int user_id FK
+        uuid user_id FK
         text message
         timestamp created_at
     }
@@ -244,14 +244,14 @@ erDiagram
 
 ### USERS
 
-Minimal user entity for Clerk integration.
+User entity synced with Supabase Auth.
 
-| Column        | Type         | Constraints        | Description       |
-| ------------- | ------------ | ------------------ | ----------------- |
-| id            | INT          | PK, AUTO_INCREMENT | Unique identifier |
-| clerk_user_id | VARCHAR(255) | UNIQUE, NOT NULL   | Clerk user ID     |
-| created_at    | TIMESTAMP    | DEFAULT NOW        | Creation time     |
-| updated_at    | TIMESTAMP    | ON UPDATE          | Last update time  |
+| Column     | Type      | Constraints      | Description      |
+| ---------- | --------- | ---------------- | ---------------- |
+| id         | UUID      | PK               | From auth.users  |
+| email      | VARCHAR   | UNIQUE, NOT NULL | User email       |
+| created_at | TIMESTAMP | DEFAULT NOW      | Creation time    |
+| updated_at | TIMESTAMP | ON UPDATE        | Last update time |
 
 ---
 
@@ -262,7 +262,7 @@ User settings and preferences.
 | Column                   | Type        | Constraints           | Description           |
 | ------------------------ | ----------- | --------------------- | --------------------- |
 | id                       | INT         | PK, AUTO_INCREMENT    | Unique identifier     |
-| user_id                  | INT         | FK → USERS.id, UNIQUE | User reference        |
+| user_id                  | UUID        | FK → USERS.id, UNIQUE | User reference        |
 | timezone                 | VARCHAR(50) | NOT NULL              | User timezone         |
 | reminder_default_minutes | INT         | DEFAULT 30            | Default reminder time |
 | start_of_week            | INT         | DEFAULT 0             | 0=Monday, 6=Sunday    |
@@ -279,7 +279,7 @@ Academic semesters.
 | Column     | Type         | Constraints        | Description       |
 | ---------- | ------------ | ------------------ | ----------------- |
 | id         | INT          | PK, AUTO_INCREMENT | Unique identifier |
-| user_id    | INT          | FK → USERS.id      | Semester owner    |
+| user_id    | UUID         | FK → USERS.id      | Semester owner    |
 | name       | VARCHAR(100) | NOT NULL           | e.g., "Fall 2025" |
 | start_date | DATE         | NOT NULL           | Semester start    |
 | end_date   | DATE         | NOT NULL           | Semester end      |
@@ -296,7 +296,7 @@ Courses with meeting tracking.
 | Column             | Type         | Constraints        | Description       |
 | ------------------ | ------------ | ------------------ | ----------------- |
 | id                 | INT          | PK, AUTO_INCREMENT | Unique identifier |
-| user_id            | INT          | FK → USERS.id      | Course owner      |
+| user_id            | UUID         | FK → USERS.id      | Course owner      |
 | semester_id        | INT          | FK → SEMESTERS.id  | Parent semester   |
 | name               | VARCHAR(100) | NOT NULL           | Course name       |
 | code               | VARCHAR(20)  | NULLABLE           | Course code       |
@@ -315,7 +315,7 @@ Tasks with subtask support.
 | Column         | Type         | Constraints             | Description         |
 | -------------- | ------------ | ----------------------- | ------------------- |
 | id             | INT          | PK, AUTO_INCREMENT      | Unique identifier   |
-| user_id        | INT          | FK → USERS.id           | Task owner          |
+| user_id        | UUID         | FK → USERS.id           | Task owner          |
 | course_id      | INT          | FK → COURSES.id         | Associated course   |
 | parent_task_id | INT          | FK → TASKS.id, NULLABLE | Parent for subtasks |
 | title          | VARCHAR(100) | NOT NULL                | Task title          |
@@ -357,7 +357,7 @@ Track actual study time.
 | Column           | Type      | Constraints               | Description       |
 | ---------------- | --------- | ------------------------- | ----------------- |
 | id               | INT       | PK, AUTO_INCREMENT        | Unique identifier |
-| user_id          | INT       | FK → USERS.id             | Session owner     |
+| user_id          | UUID      | FK → USERS.id             | Session owner     |
 | course_id        | INT       | FK → COURSES.id, NULLABLE | Course studied    |
 | task_id          | INT       | FK → TASKS.id, NULLABLE   | Task worked on    |
 | started_at       | TIMESTAMP | NOT NULL                  | Start time        |
@@ -376,7 +376,7 @@ Weekly schedule items with soft-stop.
 | Column       | Type         | Constraints                  | Description       |
 | ------------ | ------------ | ---------------------------- | ----------------- |
 | id           | VARCHAR(36)  | PK (UUID)                    | Unique identifier |
-| user_id      | INT          | FK → USERS.id                | Owner             |
+| user_id      | UUID         | FK → USERS.id                | Owner             |
 | course_id    | INT          | FK → COURSES.id, NULLABLE    | Linked course     |
 | semester_id  | INT          | FK → SEMESTERS.id, NULLABLE  | Semester          |
 | type         | ENUM         | 'course','activity','event'  | Item type         |
@@ -410,7 +410,7 @@ Track class attendance.
 | ----------- | --------- | ----------------------------------- | ----------------- |
 | id          | INT       | PK, AUTO_INCREMENT                  | Unique identifier |
 | schedule_id | INT       | FK → SCHEDULES.id                   | Schedule item     |
-| user_id     | INT       | FK → USERS.id                       | User              |
+| user_id     | UUID      | FK → USERS.id                       | User              |
 | date        | DATE      | NOT NULL                            | Attendance date   |
 | status      | ENUM      | 'present','absent','late','excused' | Attendance        |
 | notes       | TEXT      | NULLABLE                            | Notes             |
@@ -425,7 +425,7 @@ Notifications for tasks, schedules, and assessments.
 | Column        | Type      | Constraints                   | Description       |
 | ------------- | --------- | ----------------------------- | ----------------- |
 | id            | INT       | PK, AUTO_INCREMENT            | Unique identifier |
-| user_id       | INT       | FK → USERS.id                 | Owner             |
+| user_id       | UUID      | FK → USERS.id                 | Owner             |
 | task_id       | INT       | FK → TASKS.id, NULLABLE       | Task reference    |
 | schedule_id   | INT       | FK → SCHEDULES.id, NULLABLE   | Schedule ref      |
 | assessment_id | INT       | FK → ASSESSMENTS.id, NULLABLE | Assessment ref    |
@@ -445,7 +445,7 @@ Study materials per course.
 | ---------- | ------------ | -------------------- | ----------------- |
 | id         | INT          | PK, AUTO_INCREMENT   | Unique identifier |
 | course_id  | INT          | FK → COURSES.id      | Parent course     |
-| user_id    | INT          | FK → USERS.id        | Owner             |
+| user_id    | UUID         | FK → USERS.id        | Owner             |
 | type       | ENUM         | 'note','link','file' | Resource type     |
 | title      | VARCHAR(100) | NOT NULL             | Title             |
 | content    | TEXT         | NULLABLE             | Note content      |
@@ -463,7 +463,7 @@ Study groups.
 | Column      | Type         | Constraints        | Description       |
 | ----------- | ------------ | ------------------ | ----------------- |
 | id          | INT          | PK, AUTO_INCREMENT | Unique identifier |
-| owner_id    | INT          | FK → USERS.id      | Creator           |
+| owner_id    | UUID         | FK → USERS.id      | Creator           |
 | name        | VARCHAR(100) | NOT NULL           | Name              |
 | description | TEXT         | NULLABLE           | Description       |
 | invite_code | VARCHAR(20)  | UNIQUE, NOT NULL   | Join code         |
@@ -482,7 +482,7 @@ Group membership.
 | --------- | --------- | ------------------------ | ----------------- |
 | id        | INT       | PK, AUTO_INCREMENT       | Unique identifier |
 | group_id  | INT       | FK → GROUPS.id           | Group             |
-| user_id   | INT       | FK → USERS.id            | Member            |
+| user_id   | UUID      | FK → USERS.id            | Member            |
 | role      | ENUM      | 'owner','admin','member' | Role              |
 | joined_at | TIMESTAMP | DEFAULT NOW              | Join time         |
 
@@ -498,8 +498,8 @@ Group tasks.
 | ----------- | ------------ | ----------------------- | ----------------- |
 | id          | INT          | PK, AUTO_INCREMENT      | Unique identifier |
 | group_id    | INT          | FK → GROUPS.id          | Group             |
-| assignee_id | INT          | FK → USERS.id, NULLABLE | Assignee          |
-| created_by  | INT          | FK → USERS.id           | Creator           |
+| assignee_id | UUID         | FK → USERS.id, NULLABLE | Assignee          |
+| created_by  | UUID         | FK → USERS.id           | Creator           |
 | title       | VARCHAR(100) | NOT NULL                | Title             |
 | description | TEXT         | NULLABLE                | Details           |
 | completed   | BOOLEAN      | DEFAULT FALSE           | Completed         |
@@ -516,7 +516,7 @@ Group messages.
 | ---------- | --------- | ------------------ | ----------------- |
 | id         | INT       | PK, AUTO_INCREMENT | Unique identifier |
 | group_id   | INT       | FK → GROUPS.id     | Group             |
-| user_id    | INT       | FK → USERS.id      | Author            |
+| user_id    | UUID      | FK → USERS.id      | Author            |
 | message    | TEXT      | NOT NULL           | Content           |
 | created_at | TIMESTAMP | DEFAULT NOW        | Post time         |
 
