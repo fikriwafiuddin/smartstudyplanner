@@ -11,6 +11,7 @@ import {
 import { scheduleFormSchema } from "@/validations/scheduleValidation"
 import { semesterFormSchema } from "@/validations/semesterValidation"
 import { taskFormSchema } from "@/validations/taskValidation"
+import { courseFormSchema } from "@/validations/courseValidation"
 import { z } from "zod"
 
 export type TaskFormValues = z.infer<typeof taskFormSchema>
@@ -23,6 +24,8 @@ export type AddSharedTaskValues = z.infer<typeof addSharedTaskSchema>
 export type ScheduleFormValues = z.infer<typeof scheduleFormSchema>
 
 export type SemesterFormValues = z.infer<typeof semesterFormSchema>
+
+export type CourseFormValues = z.infer<typeof courseFormSchema>
 
 export type LoginFormValues = z.infer<typeof loginFormSchema>
 export type RegisterFormValues = z.infer<typeof registerFormSchema>

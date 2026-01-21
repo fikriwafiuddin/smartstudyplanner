@@ -2,33 +2,31 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
-import { Clock, MapPin, User, Pencil, Trash2 } from "lucide-react"
+import { Pencil, Trash2, BookOpen, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ScheduleItem } from "@/types"
+import { Course } from "@/types"
 import { useState } from "react"
 import CourseForm from "./CourseForm"
-
-const days = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-]
+import CourseDeleteDialog from "./CourseDeleteDialog"
+import { Progress } from "../ui/progress"
 
 type CourseCardProps = {
-  course: ScheduleItem
+  course: Course
 }
 
 function CourseCard({ course }: CourseCardProps) {
   const [openForm, setOpenForm] = useState<boolean>(false)
+  const [openDelete, setOpenDelete] = useState<boolean>(false)
+
+  const progress =
+    course.totalMeetings > 0
+      ? Math.round((course.completedMeetings / course.totalMeetings) * 100)
+      : 0
 
   return (
     <>
-      <Card key={course.id} className="group hover:shadow-md transition-shadow">
+      <Card className="group hover:shadow-md transition-shadow">
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
@@ -52,37 +50,44 @@ function CourseCard({ course }: CourseCardProps) {
                 <Pencil className="w-4 h-4" />
               </Button>
               <Button
-                variant="ghost"
+                onClick={() => setOpenDelete(true)}
+                variant="destructive"
                 size="icon"
-                className="h-8 w-8 text-destructive hover:text-destructive"
+                className="h-8 w-8"
               >
                 <Trash2 className="w-4 h-4" />
               </Button>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-3">
-          {course.lecturer && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <User className="w-4 h-4" />
-              <span>{course.lecturer}</span>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground flex items-center gap-1">
+                <BookOpen className="w-3.5 h-3.5" />
+                Progress
+              </span>
+              <span className="font-medium">{progress}%</span>
             </div>
-          )}
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <MapPin className="w-4 h-4" />
-            <span>{course.location}</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Clock className="w-4 h-4" />
-            <span>
-              {days[course.day]}, {course.startHour}:00 ({course.duration}h)
-            </span>
-          </div>
-          {course.description && (
-            <p className="text-sm text-muted-foreground pt-2 border-t border-border">
-              {course.description}
+            <Progress value={progress} className="h-2" />
+            <p className="text-xs text-muted-foreground text-right italic font-medium">
+              {course.completedMeetings} of {course.totalMeetings} meetings
             </p>
-          )}
+          </div>
+
+          <div className="flex items-center gap-4 pt-2">
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">
+                Attendance
+              </span>
+              <div className="flex items-center gap-1.5 text-foreground mt-0.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                <span className="text-sm font-semibold">
+                  {course.completedMeetings} attended
+                </span>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -90,6 +95,12 @@ function CourseCard({ course }: CourseCardProps) {
         open={openForm}
         onOpenChange={setOpenForm}
         mode="edit"
+        course={course}
+      />
+
+      <CourseDeleteDialog
+        open={openDelete}
+        onOpenChange={setOpenDelete}
         course={course}
       />
     </>

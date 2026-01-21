@@ -99,6 +99,9 @@ export type Course = {
   color: string
   totalMeetings: number
   completedMeetings: number
+  semester?: {
+    name: string
+  }
   createdAt: string
   updatedAt: string
 }

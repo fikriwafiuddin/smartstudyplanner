@@ -24,99 +24,94 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select"
-import { Textarea } from "../ui/textarea"
 import { Input } from "../ui/input"
-import { useForm, type SubmitHandler } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { scheduleFormSchema } from "@/validations/scheduleValidation"
-import { ScheduleFormValues } from "@/types/form"
+import { courseFormSchema } from "@/validations/courseValidation"
+import { CourseFormValues } from "@/types/form"
 import { Button } from "../ui/button"
-import { ScheduleItem } from "@/types"
+import { Course } from "@/types"
+import { useSemester } from "@/context/SemesterContext"
+import { useCreateCourse, useUpdateCourse } from "@/services/hooks/courseHook"
+import { Spinner } from "../ui/spinner"
 
 const colors = [
-  { value: "bg-primary", label: "Blue", preview: "bg-primary" },
-  { value: "bg-accent", label: "Accent", preview: "bg-accent" },
-  { value: "bg-success", label: "Green", preview: "bg-success" },
-  { value: "bg-warning", label: "Yellow", preview: "bg-warning" },
-  { value: "bg-destructive", label: "Red", preview: "bg-destructive" },
-  { value: "bg-indigo-500", label: "Indigo", preview: "bg-indigo-500" },
+  { value: "bg-blue-500", label: "Blue", preview: "bg-blue-500" },
+  { value: "bg-red-500", label: "Red", preview: "bg-red-500" },
+  { value: "bg-green-500", label: "Green", preview: "bg-green-500" },
+  { value: "bg-yellow-500", label: "Yellow", preview: "bg-yellow-500" },
+  { value: "bg-purple-500", label: "Purple", preview: "bg-purple-500" },
   { value: "bg-pink-500", label: "Pink", preview: "bg-pink-500" },
   { value: "bg-orange-500", label: "Orange", preview: "bg-orange-500" },
-]
-
-const days = [
-  { value: "0", label: "Monday" },
-  { value: "1", label: "Tuesday" },
-  { value: "2", label: "Wednesday" },
-  { value: "3", label: "Thursday" },
-  { value: "4", label: "Friday" },
-  { value: "5", label: "Saturday" },
-  { value: "6", label: "Sunday" },
-]
-
-const hours = Array.from({ length: 14 }, (_, i) => ({
-  value: String(7 + i),
-  label: `${7 + i}:00`,
-}))
-
-const durations = [
-  { value: "1", label: "1 hour" },
-  { value: "2", label: "2 hours" },
-  { value: "3", label: "3 hours" },
-  { value: "4", label: "4 hours" },
-]
-
-const semesters = [
-  { value: "1", label: "Odd Semester 2023/2024" },
-  { value: "2", label: "Even Semester 2023/2024" },
+  { value: "bg-indigo-500", label: "Indigo", preview: "bg-indigo-500" },
 ]
 
 type CourseFormProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   mode: "create" | "edit"
-  course?: ScheduleItem
+  course?: Course
 }
 
 function CourseForm({ open, onOpenChange, mode, course }: CourseFormProps) {
-  const form = useForm<ScheduleFormValues>({
-    resolver: zodResolver(scheduleFormSchema),
+  const { semesters, activeSemester } = useSemester()
+  const createMutation = useCreateCourse()
+  const updateMutation = useUpdateCourse()
+
+  const form = useForm({
+    resolver: zodResolver(courseFormSchema),
     defaultValues: {
-      type: "course",
       name: course?.name || "",
       code: course?.code || "",
-      lecturer: course?.lecturer || "",
-      organizer: course?.organizer || "",
-      location: course?.location || "",
-      day: course ? String(course.day) : "",
-      startHour: course?.startHour || "",
-      duration: course?.duration || "1",
-      color: course?.color || "bg-primary",
-      description: course?.description || "",
-      isRecurring: true,
-      eventDate: course?.eventDate || "",
-      stoppedAt: course?.stoppedAt || "",
-      semesterId: course?.semesterId ? String(course.semesterId) : "",
-      isActive: course?.status !== "inactive",
-      courseId: course?.courseId ? String(course.courseId) : "",
+      color: course?.color || "bg-blue-500",
+      semesterId: course?.semesterId || activeSemester?.id || 0,
+      totalMeetings: course?.totalMeetings || 14,
+      completedMeetings: course?.completedMeetings || 0,
     },
   })
 
-  const handleSubmit: SubmitHandler<ScheduleFormValues> = (data) => {
-    console.log(data)
-    onOpenChange(false)
+  // Re-sync form when course prop changes
+  // if (course && form.getValues("name") !== course.name && mode === "edit") {
+  //   form.reset({
+  //     name: course.name,
+  //     code: course.code,
+  //     color: course.color,
+  //     semesterId: course.semesterId,
+  //     totalMeetings: course.totalMeetings,
+  //     completedMeetings: course.completedMeetings,
+  //   })
+  // }
+
+  const handleSubmit = (data: CourseFormValues) => {
+    if (mode === "create") {
+      createMutation.mutate(data, {
+        onSuccess: () => {
+          onOpenChange(false)
+          form.reset()
+        },
+      })
+    } else if (mode === "edit" && course) {
+      updateMutation.mutate(
+        { id: course.id, ...data },
+        {
+          onSuccess: () => onOpenChange(false),
+        },
+      )
+    }
   }
+
+  const isLoading = createMutation.isPending || updateMutation.isPending
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
             {mode === "create" ? "Add Course" : "Edit Course"}
           </DialogTitle>
           <DialogDescription>
             {mode === "create"
-              ? "Define your course schedule and details."
+              ? "Define your course details and tracking."
               : "Update course details."}
           </DialogDescription>
         </DialogHeader>
@@ -133,18 +128,18 @@ function CourseForm({ open, onOpenChange, mode, course }: CourseFormProps) {
                 <FormItem>
                   <FormLabel>Semester</FormLabel>
                   <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    onValueChange={(val) => field.onChange(parseInt(val))}
+                    defaultValue={field.value ? String(field.value) : undefined}
                   >
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select semester" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       {semesters.map((s) => (
-                        <SelectItem key={s.value} value={s.value}>
-                          {s.label}
+                        <SelectItem key={s.id} value={String(s.id)}>
+                          {s.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -161,7 +156,7 @@ function CourseForm({ open, onOpenChange, mode, course }: CourseFormProps) {
                 <FormItem>
                   <FormLabel>Course Name</FormLabel>
                   <FormControl>
-                    <Input placeholder={"e.g., Data Structures"} {...field} />
+                    <Input placeholder="e.g., Data Structures" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -174,9 +169,13 @@ function CourseForm({ open, onOpenChange, mode, course }: CourseFormProps) {
                 name="code"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Course Code</FormLabel>
+                    <FormLabel>Course Code (Optional)</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., CS201" {...field} />
+                      <Input
+                        placeholder="e.g., CS201"
+                        {...field}
+                        value={field.value || ""}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -231,61 +230,22 @@ function CourseForm({ open, onOpenChange, mode, course }: CourseFormProps) {
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="lecturer"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Lecturer</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., Dr. Smith" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="location"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Location</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="e.g., Room 301 or Auditorium"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="day"
+                name="totalMeetings"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Day</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={String(field.value)}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select day" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {days.map((day) => (
-                          <SelectItem key={day.value} value={day.value}>
-                            {day.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>Total Meetings</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        onChange={(e) =>
+                          field.onChange(parseInt(e.target.value) || 0)
+                        }
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -293,88 +253,39 @@ function CourseForm({ open, onOpenChange, mode, course }: CourseFormProps) {
 
               <FormField
                 control={form.control}
-                name="startHour"
+                name="completedMeetings"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Start Time</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={String(field.value)}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select time" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {hours.map((hour) => (
-                          <SelectItem key={hour.value} value={hour.value}>
-                            {hour.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>Completed Meetings</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        onChange={(e) =>
+                          field.onChange(parseInt(e.target.value) || 0)
+                        }
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="duration"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Duration</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={String(field.value)}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select duration" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {durations.map((duration) => (
-                        <SelectItem key={duration.value} value={duration.value}>
-                          {duration.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description (Optional)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Additional notes or description..."
-                      className="resize-none"
-                      rows={3}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <DialogFooter>
+            <DialogFooter className="pt-4">
               <DialogClose asChild>
-                <Button type="button" variant="outline">
+                <Button type="button" variant="outline" disabled={isLoading}>
                   Cancel
                 </Button>
               </DialogClose>
-              <Button type="submit">
-                {mode === "create" ? "Add to Schedule" : "Save Changes"}
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? (
+                  <Spinner />
+                ) : mode === "create" ? (
+                  "Add Course"
+                ) : (
+                  "Save Changes"
+                )}
               </Button>
             </DialogFooter>
           </form>

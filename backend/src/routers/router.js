@@ -2,6 +2,7 @@ import express from "express"
 import { ErrorResponse, SuccessResponse } from "../utils/response.js"
 import errorMiddleware from "../middleware/errorMiddleware.js"
 import semesterRouter from "./semesterRouter.js"
+import courseRouter from "./courseRouter.js"
 import authRouter from "./auth.router.js"
 
 const router = express.Router()
@@ -14,6 +15,7 @@ router.get("/health", (req, res) => {
 // Routes
 router.use("/auth", authRouter)
 router.use("/semesters", semesterRouter)
+router.use("/courses", courseRouter)
 
 router.get("/", (req, res) => {
   return res.json(new SuccessResponse("Welcome to SmartStudyPlanner API"))

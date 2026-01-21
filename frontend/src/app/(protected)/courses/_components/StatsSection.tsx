@@ -1,64 +1,23 @@
-import { BookOpen, Clock, User } from "lucide-react"
+import { BookOpen, CheckCircle2, Award } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
+import { Course } from "@/types"
 
-const courses = [
-  {
-    id: "1",
-    type: "course",
-    name: "Data Structures",
-    code: "CS201",
-    lecturer: "Dr. Smith",
-    location: "Room 301",
-    day: "0",
-    startHour: "9",
-    duration: "2",
-    color: "bg-primary",
-    description: "Introduction to data structures and algorithms",
-    isRecurring: true,
-  },
-  {
-    id: "2",
-    type: "course",
-    name: "Linear Algebra",
-    code: "MATH301",
-    lecturer: "Prof. Johnson",
-    location: "Room 205",
-    day: "1",
-    startHour: "11",
-    duration: "1",
-    color: "bg-accent",
-    isRecurring: true,
-  },
-  {
-    id: "3",
-    type: "course",
-    name: "Database Systems",
-    code: "CS301",
-    lecturer: "Dr. Williams",
-    location: "Room 401",
-    day: "2",
-    startHour: "14",
-    duration: "2",
-    color: "bg-success",
-    description: "Relational databases and SQL",
-    isRecurring: true,
-  },
-  {
-    id: "4",
-    type: "course",
-    name: "Computer Networks",
-    code: "CS401",
-    lecturer: "Prof. Brown",
-    location: "Room 102",
-    day: "3",
-    startHour: "10",
-    duration: "1",
-    color: "bg-warning",
-    isRecurring: true,
-  },
-]
+type StatsSectionProps = {
+  courses: Course[]
+}
 
-function StatsSection() {
+function StatsSection({ courses }: StatsSectionProps) {
+  const totalMeetings = courses.reduce((acc, c) => acc + c.totalMeetings, 0)
+  const completedMeetings = courses.reduce(
+    (acc, c) => acc + c.completedMeetings,
+    0,
+  )
+
+  const overallProgress =
+    totalMeetings > 0
+      ? Math.round((completedMeetings / totalMeetings) * 100)
+      : 0
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <Card>
@@ -76,27 +35,27 @@ function StatsSection() {
       </Card>
       <Card>
         <CardContent className="p-4 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center">
-            <Clock className="w-6 h-6 text-accent" />
+          <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center">
+            <CheckCircle2 className="w-6 h-6 text-success" />
           </div>
           <div>
             <p className="text-2xl font-bold text-foreground">
-              {courses.reduce((acc, c) => acc + parseInt(c.duration), 0)}h
+              {completedMeetings}
             </p>
-            <p className="text-sm text-muted-foreground">Weekly Hours</p>
+            <p className="text-sm text-muted-foreground">Meetings Attended</p>
           </div>
         </CardContent>
       </Card>
       <Card>
         <CardContent className="p-4 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center">
-            <User className="w-6 h-6 text-success" />
+          <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center">
+            <Award className="w-6 h-6 text-accent" />
           </div>
           <div>
             <p className="text-2xl font-bold text-foreground">
-              {new Set(courses.map((c) => c.lecturer).filter(Boolean)).size}
+              {overallProgress}%
             </p>
-            <p className="text-sm text-muted-foreground">Instructors</p>
+            <p className="text-sm text-muted-foreground">Overall Progress</p>
           </div>
         </CardContent>
       </Card>
