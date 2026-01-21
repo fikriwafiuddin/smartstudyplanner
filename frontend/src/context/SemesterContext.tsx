@@ -1,57 +1,38 @@
 "use client"
 
-import React, { createContext, useContext, useState } from "react"
+import React, { createContext, useContext, useState, useMemo } from "react"
 import { Semester } from "@/types"
+import { useSemesters } from "@/services/hooks/semesterHook"
 
 type SemesterContextType = {
   activeSemester: Semester | null
   setActiveSemester: (semester: Semester) => void
   semesters: Semester[]
-  setSemesters: React.Dispatch<React.SetStateAction<Semester[]>>
+  isLoading: boolean
 }
 
 const SemesterContext = createContext<SemesterContextType | undefined>(
   undefined,
 )
 
-// Mock initial data
-const INITIAL_SEMESTERS: Semester[] = [
-  {
-    id: 1,
-    userId: 1,
-    name: "Odd Semester 2023/2024",
-    startDate: "2023-09-01",
-    endDate: "2024-01-31",
-    isActive: false,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 2,
-    userId: 1,
-    name: "Even Semester 2023/2024",
-    startDate: "2024-02-01",
-    endDate: "2024-06-30",
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-]
-
 export function SemesterProvider({ children }: { children: React.ReactNode }) {
-  const [semesters, setSemesters] = useState<Semester[]>(INITIAL_SEMESTERS)
-  const [activeSemester, setActiveSemesterState] = useState<Semester | null>(
-    INITIAL_SEMESTERS.find((s) => s.isActive) || null,
-  )
+  const { data: fetchedSemesters, isLoading } = useSemesters()
+  const [activeSemesterId, setActiveSemesterId] = useState<number | null>(null)
+
+  const activeSemester = useMemo(() => {
+    if (!fetchedSemesters || fetchedSemesters.length === 0) return null
+    if (activeSemesterId) {
+      return (
+        fetchedSemesters.find((s) => s.id === activeSemesterId) ||
+        fetchedSemesters.find((s) => s.isActive) ||
+        fetchedSemesters[0]
+      )
+    }
+    return fetchedSemesters.find((s) => s.isActive) || fetchedSemesters[0]
+  }, [fetchedSemesters, activeSemesterId])
 
   const setActiveSemester = (semester: Semester) => {
-    setSemesters((prev) =>
-      prev.map((s) => ({
-        ...s,
-        isActive: s.id === semester.id,
-      })),
-    )
-    setActiveSemesterState(semester)
+    setActiveSemesterId(semester.id)
   }
 
   return (
@@ -59,8 +40,8 @@ export function SemesterProvider({ children }: { children: React.ReactNode }) {
       value={{
         activeSemester,
         setActiveSemester,
-        semesters,
-        setSemesters,
+        semesters: fetchedSemesters || [],
+        isLoading,
       }}
     >
       {children}

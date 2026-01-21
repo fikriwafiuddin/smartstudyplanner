@@ -53,7 +53,6 @@ function AppSidebar() {
   const logout = useLogout()
   const collapsed = state === "collapsed"
   const { user } = useAuth()
-  console.log(user)
 
   const handleLogout = () => {
     logout.mutate()

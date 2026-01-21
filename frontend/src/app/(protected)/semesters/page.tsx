@@ -11,7 +11,7 @@ import { useSemester } from "@/context/SemesterContext"
 import SemesterCard from "@/components/semesters/SemesterCard"
 
 export default function Semesters() {
-  const { semesters } = useSemester()
+  const { semesters, isLoading } = useSemester()
   const [searchQuery, setSearchQuery] = useState("")
   const [openForm, setOpenForm] = useState<boolean>(false)
   const [selectedSemester, setSelectedSemester] = useState<
@@ -64,12 +64,16 @@ export default function Semesters() {
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredSemesters.map((semester) => (
-          <SemesterCard key={semester.id} semester={semester} />
-        ))}
+        {isLoading
+          ? Array.from({ length: 3 }).map((_, i) => (
+              <Card key={i} className="h-48 animate-pulse bg-muted/50" />
+            ))
+          : filteredSemesters.map((semester) => (
+              <SemesterCard key={semester.id} semester={semester} />
+            ))}
       </div>
 
-      {filteredSemesters.length === 0 && (
+      {!isLoading && filteredSemesters.length === 0 && (
         <div className="text-center py-12">
           <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-4">
             <Search className="h-6 w-6 text-muted-foreground" />

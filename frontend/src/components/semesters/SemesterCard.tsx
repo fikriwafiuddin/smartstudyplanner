@@ -13,17 +13,23 @@ import {
   Trash2Icon,
 } from "lucide-react"
 import { Button } from "../ui/button"
-import { useSemester } from "@/context/SemesterContext"
 import { useState } from "react"
 import SemesterForm from "./SemesterForm"
+import {
+  useDeleteSemester,
+  useUpdateSemester,
+} from "@/services/hooks/semesterHook"
+import SemesterDeleteDialog from "./SemesterDeleteDialog"
 
 type SemesterCardProps = {
   semester: Semester
 }
 
 function SemesterCard({ semester }: SemesterCardProps) {
-  const { setActiveSemester } = useSemester()
   const [openFormEdit, setOpenFormEdit] = useState(false)
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false)
+  const deleteMutation = useDeleteSemester()
+  const updateMutation = useUpdateSemester()
 
   return (
     <>
@@ -67,9 +73,18 @@ function SemesterCard({ semester }: SemesterCardProps) {
               <Button
                 size="sm"
                 className="flex-1"
-                onClick={() => setActiveSemester(semester)}
+                onClick={() =>
+                  updateMutation.mutate({ id: semester.id, isActive: true })
+                }
+                disabled={updateMutation.isPending}
+                title="Set as Active"
               >
-                <RefreshCcwIcon className="h-4 w-4" />
+                <RefreshCcwIcon
+                  className={cn(
+                    "h-4 w-4",
+                    updateMutation.isPending && "animate-spin",
+                  )}
+                />
               </Button>
             )}
             <Button
@@ -84,7 +99,8 @@ function SemesterCard({ semester }: SemesterCardProps) {
               variant="destructive"
               size="sm"
               className="flex-1"
-              // onClick={() => handleEdit(semester)}
+              onClick={() => setOpenDeleteDialog(true)}
+              disabled={deleteMutation.isPending}
             >
               <Trash2Icon className="h-4 w-4" />
             </Button>
@@ -96,6 +112,12 @@ function SemesterCard({ semester }: SemesterCardProps) {
         open={openFormEdit}
         onOpenChange={setOpenFormEdit}
         mode="edit"
+        semester={semester}
+      />
+
+      <SemesterDeleteDialog
+        open={openDeleteDialog}
+        onOpenChange={setOpenDeleteDialog}
         semester={semester}
       />
     </>

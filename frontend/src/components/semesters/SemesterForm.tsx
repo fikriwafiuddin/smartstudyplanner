@@ -26,6 +26,13 @@ import { Button } from "../ui/button"
 import { Semester } from "@/types"
 import { Switch } from "../ui/switch"
 
+import {
+  useCreateSemester,
+  useUpdateSemester,
+} from "@/services/hooks/semesterHook"
+import DatePicker from "../DatePicker"
+import { Spinner } from "../ui/spinner"
+
 type SemesterFormProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -39,30 +46,47 @@ export default function SemesterForm({
   mode,
   semester,
 }: SemesterFormProps) {
+  const createMutation = useCreateSemester()
+  const updateMutation = useUpdateSemester()
+
   const form = useForm<SemesterFormValues>({
     resolver: zodResolver(semesterFormSchema),
     defaultValues: {
       name: semester?.name || "",
-      startDate: semester?.startDate || "",
-      endDate: semester?.endDate || "",
+      startDate: semester?.startDate
+        ? new Date(semester.startDate)
+        : new Date(),
+      endDate: semester?.endDate ? new Date(semester.endDate) : new Date(),
       isActive: semester?.isActive || true,
     },
   })
 
   // Re-sync form when semester prop changes
-  if (semester && form.getValues("name") !== semester.name && mode === "edit") {
-    form.reset({
-      name: semester.name,
-      startDate: semester.startDate,
-      endDate: semester.endDate,
-      isActive: semester.isActive,
-    })
-  }
+  // if (semester && form.getValues("name") !== semester.name && mode === "edit") {
+  //   form.reset({
+  //     name: semester.name,
+  //     startDate: new Date(semester.startDate),
+  //     endDate: new Date(semester.endDate),
+  //     isActive: semester.isActive,
+  //   })
+  // }
 
   const handleSubmit = (data: SemesterFormValues) => {
-    console.log(data)
-    onOpenChange(false)
+    if (mode === "create") {
+      createMutation.mutate(data, {
+        onSuccess: () => onOpenChange(false),
+      })
+    } else if (mode === "edit" && semester) {
+      updateMutation.mutate(
+        { id: semester.id, ...data },
+        {
+          onSuccess: () => onOpenChange(false),
+        },
+      )
+    }
   }
+
+  const isLoading = createMutation.isPending || updateMutation.isPending
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -107,7 +131,7 @@ export default function SemesterForm({
                   <FormItem>
                     <FormLabel>Start Date</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} />
+                      <DatePicker {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -121,11 +145,7 @@ export default function SemesterForm({
                   <FormItem>
                     <FormLabel>End Date</FormLabel>
                     <FormControl>
-                      <Input
-                        type="date"
-                        {...field}
-                        value={(field.value as string) || ""}
-                      />
+                      <DatePicker {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -160,8 +180,14 @@ export default function SemesterForm({
                   Cancel
                 </Button>
               </DialogClose>
-              <Button type="submit">
-                {mode === "create" ? "Create Semester" : "Save Changes"}
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? (
+                  <Spinner />
+                ) : mode === "create" ? (
+                  "Create Semester"
+                ) : (
+                  "Save Changes"
+                )}
               </Button>
             </DialogFooter>
           </form>
