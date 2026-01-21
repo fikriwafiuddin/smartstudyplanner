@@ -31,6 +31,7 @@ import { useLogout } from "@/services/hooks/authHook"
 import { Button } from "../ui/button"
 import { cn } from "@/lib/utils"
 import SemesterSwitcher from "./SemesterSwitcher"
+import { useAuth } from "@/context/AuthContext"
 
 const navItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
@@ -51,6 +52,8 @@ function AppSidebar() {
   const { state } = useSidebar()
   const logout = useLogout()
   const collapsed = state === "collapsed"
+  const { user } = useAuth()
+  console.log(user)
 
   const handleLogout = () => {
     logout.mutate()
@@ -168,10 +171,10 @@ function AppSidebar() {
           {!collapsed && (
             <div className="flex-1 min-w-0 animate-fade-in">
               <p className="text-sm font-medium text-foreground truncate">
-                Alex Johnson
+                {user?.user_metadata.full_name}
               </p>
               <p className="text-[10px] text-muted-foreground truncate leading-tight">
-                alex@university.edu
+                {user?.user_metadata.email}
               </p>
             </div>
           )}
