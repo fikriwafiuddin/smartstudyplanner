@@ -2,6 +2,7 @@ import express from "express"
 import { ErrorResponse, SuccessResponse } from "../utils/response.js"
 import errorMiddleware from "../middleware/errorMiddleware.js"
 import semesterRouter from "./semesterRouter.js"
+import authRouter from "./auth.router.js"
 
 const router = express.Router()
 
@@ -11,6 +12,7 @@ router.get("/health", (req, res) => {
 })
 
 // Routes
+router.use("/auth", authRouter)
 router.use("/semesters", semesterRouter)
 
 router.get("/", (req, res) => {

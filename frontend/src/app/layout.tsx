@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/wrapper/ThemeProvider"
 import { Toaster } from "@/components/ui/sonner"
 import { SemesterProvider } from "@/context/SemesterContext"
 import { FocusProvider } from "@/context/FocusContext"
+import QueryProvider from "@/context/QueryProvider"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,12 +38,14 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <SemesterProvider>
-            <FocusProvider>
-              {children}
-              <Toaster />
-            </FocusProvider>
-          </SemesterProvider>
+          <QueryProvider>
+            <SemesterProvider>
+              <FocusProvider>
+                {children}
+                <Toaster />
+              </FocusProvider>
+            </SemesterProvider>
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>

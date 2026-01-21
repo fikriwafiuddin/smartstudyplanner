@@ -25,7 +25,10 @@ import {
   Target,
   ClipboardCheck,
   FileText,
+  LogOut,
 } from "lucide-react"
+import { useLogout } from "@/services/hooks/authHook"
+import { Button } from "../ui/button"
 import { cn } from "@/lib/utils"
 import SemesterSwitcher from "./SemesterSwitcher"
 
@@ -46,7 +49,12 @@ const navItems = [
 function AppSidebar() {
   const pathname = usePathname()
   const { state } = useSidebar()
+  const logout = useLogout()
   const collapsed = state === "collapsed"
+
+  const handleLogout = () => {
+    logout.mutate()
+  }
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border">
@@ -148,7 +156,7 @@ function AppSidebar() {
       >
         <div
           className={cn(
-            "flex items-center gap-3 p-2 rounded-lg bg-secondary/50 border border-border/50 transition-all duration-200",
+            "flex items-center gap-3 p-2 rounded-lg bg-secondary/50 border border-border/50 transition-all duration-200 group/user relative",
             collapsed ? "justify-center p-0 size-10! mx-auto" : "p-2",
           )}
         >
@@ -167,6 +175,22 @@ function AppSidebar() {
               </p>
             </div>
           )}
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn(
+              "shrink-0 hover:bg-destructive/10 hover:text-destructive transition-colors",
+              collapsed
+                ? "absolute inset-0 size-full opacity-0 group-hover/user:opacity-100 bg-background/80"
+                : "size-8",
+            )}
+            onClick={handleLogout}
+            disabled={logout.isPending}
+            title="Logout"
+          >
+            <LogOut className="size-4" />
+          </Button>
         </div>
       </SidebarFooter>
     </Sidebar>

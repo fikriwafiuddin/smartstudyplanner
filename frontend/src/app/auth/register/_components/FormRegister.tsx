@@ -15,9 +15,13 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { registerFormSchema } from "@/validations/authValidation"
 import { Button } from "@/components/ui/button"
+import { z } from "zod"
+import { useRegister } from "@/services/hooks/authHook"
 
 function FormRegister() {
   const [showPassword, setShowPassword] = useState<boolean>(false)
+  const registerMutation = useRegister()
+
   const form = useForm({
     resolver: zodResolver(registerFormSchema),
     defaultValues: {
@@ -27,7 +31,10 @@ function FormRegister() {
       confirmPassword: "",
     },
   })
-  const handleSubmit = () => {}
+
+  const handleSubmit = (values: z.infer<typeof registerFormSchema>) => {
+    registerMutation.mutate(values)
+  }
 
   return (
     <Form {...form}>
@@ -133,30 +140,15 @@ function FormRegister() {
           )}
         />
 
-        {/* <div className="flex items-start gap-2">
-          <Checkbox
-            id="terms"
-            checked={agreed}
-            onCheckedChange={(checked) => setAgreed(checked as boolean)}
-            className="mt-1"
-          />
-          <Label
-            htmlFor="terms"
-            className="text-sm font-normal text-muted-foreground"
-          >
-            I agree to the{" "}
-            <Link to="/terms" className="text-primary hover:underline">
-              Terms of Service
-            </Link>{" "}
-            and{" "}
-            <Link to="/privacy" className="text-primary hover:underline">
-              Privacy Policy
-            </Link>
-          </Label>
-        </div> */}
-
-        <Button type="submit" className="w-full" size="lg">
-          Create Account
+        <Button
+          type="submit"
+          className="w-full"
+          size="lg"
+          disabled={registerMutation.isPending}
+        >
+          {registerMutation.isPending
+            ? "Creating Account..."
+            : "Create Account"}
         </Button>
       </form>
     </Form>

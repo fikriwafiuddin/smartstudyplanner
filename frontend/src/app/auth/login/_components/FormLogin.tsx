@@ -16,9 +16,13 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { loginFormSchema } from "@/validations/authValidation"
 import { Button } from "@/components/ui/button"
+import { z } from "zod"
+import { useLogin } from "@/services/hooks/authHook"
 
 function FormLogin() {
   const [showPassword, setShowPassword] = useState(false)
+  const loginMutation = useLogin()
+
   const form = useForm({
     resolver: zodResolver(loginFormSchema),
     defaultValues: {
@@ -27,7 +31,10 @@ function FormLogin() {
     },
   })
 
-  const handleSubmit = () => {}
+  const handleSubmit = (values: z.infer<typeof loginFormSchema>) => {
+    loginMutation.mutate(values)
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
@@ -95,8 +102,13 @@ function FormLogin() {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full" size="lg">
-          Sign In
+        <Button
+          type="submit"
+          className="w-full"
+          size="lg"
+          disabled={loginMutation.isPending}
+        >
+          {loginMutation.isPending ? "Signing In..." : "Sign In"}
         </Button>
       </form>
     </Form>
